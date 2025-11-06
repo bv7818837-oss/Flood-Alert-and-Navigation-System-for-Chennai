@@ -1,0 +1,19 @@
+{
+  "name": "untitled-folder-2",
+  "version": "1.0.0",
+  "description": "A comprehensive, AI-powered flood monitoring and alert system designed specifically for Chennai, India. This system provides real-time street-level flood alerts, emergency response features, and smart route planning to help citizens stay safe during flood events.",
+  "main": "send_sms.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^1.11.0",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.2",
+    "express": "^5.1.0",
+    "twilio": "^5.9.0"
+  }
+}

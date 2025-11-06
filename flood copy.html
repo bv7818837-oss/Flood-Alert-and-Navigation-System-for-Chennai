@@ -1,0 +1,5309 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+
+  <meta charset="UTF-8">
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Chennai Urban Flood Alert System</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+
+  <style>
+
+    * {
+
+      margin: 0;
+
+      padding: 0;
+
+      box-sizing: border-box;
+
+    }
+
+     
+
+    body {
+
+      font-family: 'Inter', sans-serif;
+
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+
+      height: 100vh;
+
+      overflow: hidden;
+
+    }
+
+     
+
+    .app-container {
+
+      display: flex;
+
+      height: 100vh;
+
+      position: relative;
+
+    }
+
+     
+
+    .map-section {
+
+      flex: 1;
+
+      position: relative;
+
+      background: #f8fafc;
+
+    }
+
+     
+
+    .map-container {
+
+      position: absolute;
+
+      top: 0;
+
+      left: 0;
+
+      right: 0;
+
+      bottom: 0;
+
+      background-color: #e2e8f0;
+
+    }
+
+     
+
+    #map {
+
+      width: 100%;
+
+      height: 100%;
+
+    }
+
+     
+
+    .sidebar {
+
+      width: 400px;
+
+      background: rgba(255, 255, 255, 0.95);
+
+      backdrop-filter: blur(10px);
+
+      border-left: 1px solid rgba(255, 255, 255, 0.2);
+
+      overflow-y: auto;
+
+      transition: transform 0.3s ease;
+
+    }
+
+     
+
+    .sidebar.collapsed {
+
+      transform: translateX(100%);
+
+    }
+
+     
+
+    .sidebar-header {
+
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+
+      color: white;
+
+      padding: 20px;
+
+      text-align: center;
+
+    }
+
+     
+
+    .sidebar-content {
+
+      padding: 20px;
+
+    }
+
+     
+
+    .floating-controls {
+
+      position: absolute;
+
+      top: 20px;
+
+      left: 20px;
+
+      z-index: 1000;
+
+      display: flex;
+
+      flex-direction: column;
+
+      gap: 10px;
+
+    }
+
+     
+
+    .floating-btn {
+
+      background: rgba(255, 255, 255, 0.95);
+
+      backdrop-filter: blur(10px);
+
+      border: none;
+
+      border-radius: 50px;
+
+      padding: 12px 20px;
+
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+
+      cursor: pointer;
+
+      transition: all 0.3s ease;
+
+      font-weight: 600;
+
+      display: flex;
+
+      align-items: center;
+
+      gap: 8px;
+
+      min-width: 200px;
+
+    }
+
+     
+
+    .floating-btn:hover {
+
+      transform: translateY(-2px);
+
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+
+    }
+
+     
+
+    .floating-btn.primary {
+
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+
+      color: white;
+
+    }
+
+     
+
+    .floating-btn.emergency {
+
+      background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
+
+      color: white;
+
+      animation: pulse 2s infinite;
+
+    }
+
+     
+
+    .floating-btn.offline {
+
+      background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+
+      color: white;
+
+    }
+
+     
+
+    .floating-btn.success {
+
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+
+      color: white;
+
+    }
+
+     
+
+    .floating-btn.danger {
+
+      background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+
+      color: white;
+
+    }
+
+     
+
+    .floating-btn.purple {
+
+      background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+
+      color: white;
+
+    }
+
+     
+
+    .floating-btn.green {
+
+      background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+
+      color: white;
+
+    }
+
+     
+
+    .map-legend {
+
+      position: absolute;
+
+      bottom: 20px;
+
+      left: 20px;
+
+      background: rgba(255, 255, 255, 0.95);
+
+      backdrop-filter: blur(10px);
+
+      border-radius: 12px;
+
+      padding: 15px;
+
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+
+      z-index: 1000;
+
+    }
+
+     
+
+    .offline-indicator {
+
+      position: absolute;
+
+      top: 20px;
+
+      right: 20px;
+
+      background: rgba(239, 68, 68, 0.95);
+
+      color: white;
+
+      padding: 8px 16px;
+
+      border-radius: 20px;
+
+      font-size: 12px;
+
+      font-weight: 600;
+
+      z-index: 1000;
+
+      display: none;
+
+    }
+
+     
+
+    .status-panel {
+
+      background: rgba(255, 255, 255, 0.95);
+
+      backdrop-filter: blur(10px);
+
+      border-radius: 12px;
+
+      padding: 20px;
+
+      margin-bottom: 20px;
+
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+
+    }
+
+     
+
+    .dashboard-grid {
+
+      display: grid;
+
+      grid-template-columns: 1fr 1fr;
+
+      gap: 15px;
+
+      margin-bottom: 20px;
+
+    }
+
+     
+
+    .dashboard-card {
+
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+
+      color: white;
+
+      padding: 20px;
+
+      border-radius: 12px;
+
+      text-align: center;
+
+    }
+
+     
+
+    .dashboard-card h3 {
+
+      font-size: 14px;
+
+      margin-bottom: 8px;
+
+      opacity: 0.9;
+
+    }
+
+     
+
+    .dashboard-card .value {
+
+      font-size: 24px;
+
+      font-weight: bold;
+
+      margin-bottom: 4px;
+
+    }
+
+     
+
+    .dashboard-card .subtitle {
+
+      font-size: 12px;
+
+      opacity: 0.8;
+
+    }
+
+     
+
+    .emergency-contacts {
+
+      display: grid;
+
+      grid-template-columns: 1fr 1fr;
+
+      gap: 10px;
+
+      margin-bottom: 20px;
+
+    }
+
+     
+
+    .emergency-btn {
+
+      background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+
+      color: white;
+
+      border: none;
+
+      padding: 12px 8px;
+
+      border-radius: 8px;
+
+      font-size: 12px;
+
+      font-weight: 600;
+
+      cursor: pointer;
+
+      transition: all 0.3s ease;
+
+      text-align: center;
+
+    }
+
+     
+
+    .emergency-btn:hover {
+
+      transform: translateY(-2px);
+
+      box-shadow: 0 8px 25px rgba(239, 68, 68, 0.3);
+
+    }
+
+     
+
+    .form-group {
+
+      margin-bottom: 20px;
+
+    }
+
+     
+
+    .form-group label {
+
+      display: block;
+
+      margin-bottom: 8px;
+
+      font-weight: 600;
+
+      color: #374151;
+
+    }
+
+     
+
+    .form-input {
+
+      width: 100%;
+
+      padding: 12px 16px;
+
+      border: 2px solid #e5e7eb;
+
+      border-radius: 8px;
+
+      font-size: 14px;
+
+      transition: all 0.3s ease;
+
+    }
+
+     
+
+    .form-input:focus {
+
+      outline: none;
+
+      border-color: #667eea;
+
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+
+    }
+
+     
+
+    .form-row {
+
+      display: flex;
+
+      gap: 10px;
+
+    }
+
+     
+
+    .form-row .form-input {
+
+      flex: 1;
+
+    }
+
+     
+
+    .btn {
+
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+
+      color: white;
+
+      border: none;
+
+      padding: 12px 24px;
+
+      border-radius: 8px;
+
+      font-weight: 600;
+
+      cursor: pointer;
+
+      transition: all 0.3s ease;
+
+      width: 100%;
+
+    }
+
+     
+
+    .btn:hover {
+
+      transform: translateY(-2px);
+
+      box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+
+    }
+
+     
+
+    .btn.success {
+
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+
+    }
+
+     
+
+    .btn.danger {
+
+      background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+
+    }
+
+     
+
+    .btn.warning {
+
+      background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+
+    }
+
+     
+
+    .btn.purple {
+
+      background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+
+    }
+
+     
+
+    .btn.green {
+
+      background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+
+    }
+
+     
+
+    .status-message {
+
+      padding: 16px;
+
+      border-radius: 8px;
+
+      margin-bottom: 20px;
+
+      font-weight: 600;
+
+    }
+
+     
+
+    .status-message.success {
+
+      background: #d1fae5;
+
+      color: #065f46;
+
+      border: 1px solid #a7f3d0;
+
+    }
+
+     
+
+    .status-message.warning {
+
+      background: #fef3c7;
+
+      color: #92400e;
+
+      border: 1px solid #fde68a;
+
+    }
+
+     
+
+    .status-message.danger {
+
+      background: #fee2e2;
+
+      color: #991b1b;
+
+      border: 1px solid #fecaca;
+
+    }
+
+     
+
+    .status-message.info {
+
+      background: #dbeafe;
+
+      color: #1e40af;
+
+      border: 1px solid #bfdbfe;
+
+    }
+
+     
+
+    .sidebar-toggle {
+
+      position: absolute;
+
+      top: 20px;
+
+      right: 20px;
+
+      background: rgba(255, 255, 255, 0.95);
+
+      backdrop-filter: blur(10px);
+
+      border: none;
+
+      border-radius: 50%;
+
+      width: 50px;
+
+      height: 50px;
+
+      display: flex;
+
+      align-items: center;
+
+      justify-content: center;
+
+      cursor: pointer;
+
+      z-index: 1000;
+
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+
+      transition: all 0.3s ease;
+
+    }
+
+     
+
+    .sidebar-toggle:hover {
+
+      transform: scale(1.1);
+
+    }
+
+     
+
+    .sidebar-toggle.collapsed {
+
+      right: 20px;
+
+    }
+
+     
+
+    .sidebar-toggle:not(.collapsed) {
+
+      right: 420px;
+
+    }
+
+     
+
+    @keyframes pulse {
+
+      0% { transform: scale(1); }
+
+      50% { transform: scale(1.05); }
+
+      100% { transform: scale(1); }
+
+    }
+
+     
+
+    @media (max-width: 768px) {
+
+      .sidebar {
+
+        width: 100%;
+
+        position: fixed;
+
+        top: 0;
+
+        right: 0;
+
+        height: 100vh;
+
+        z-index: 1000;
+
+      }
+
+       
+
+      .sidebar.collapsed {
+
+        transform: translateX(100%);
+
+      }
+
+       
+
+      .floating-controls {
+
+        top: 10px;
+
+        left: 10px;
+
+        right: 10px;
+
+      }
+
+       
+
+      .floating-btn {
+
+        min-width: auto;
+
+        padding: 10px 16px;
+
+        font-size: 14px;
+
+      }
+
+       
+
+      .dashboard-grid {
+
+        grid-template-columns: 1fr;
+
+      }
+
+       
+
+      .emergency-contacts {
+
+        grid-template-columns: 1fr;
+
+      }
+
+    }
+
+    .flood-zone {
+
+      position: absolute;
+
+      border-radius: 50%;
+
+      animation: pulse 2s infinite ease-in-out;
+
+      opacity: 0.7;
+
+      box-shadow: 0 0 10px 5px rgba(0, 0, 0, 0.2);
+
+      transition: all 0.5s ease-in-out;
+
+      cursor: pointer;
+
+    }
+
+    .flood-zone.low { background-color: rgba(59, 130, 246, 0.6); } /* blue-500 */
+
+    .flood-zone.medium { background-color: rgba(245, 158, 11, 0.6); } /* amber-500 */
+
+    .flood-zone.high { background-color: rgba(239, 68, 68, 0.6); } /* red-500 */
+
+     
+
+    /* Educational Resources Section Styles */
+    .tab-button {
+      transition: all 0.2s ease;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+    }
+    
+    .tab-button:hover {
+      color: #2563eb; /* blue-600 */
+    }
+    
+    .tab-button.active {
+      border-bottom-color: #3b82f6; /* blue-500 */
+      color: #2563eb; /* blue-600 */
+    }
+    
+    .tab-pane {
+      animation: fadeIn 0.3s ease-in-out;
+    }
+    
+    .educational-content {
+      max-height: 300px;
+      overflow-y: auto;
+      padding-right: 8px;
+    }
+    
+    /* Custom scrollbar for educational content */
+    .educational-content::-webkit-scrollbar {
+      width: 6px;
+    }
+    
+    .educational-content::-webkit-scrollbar-track {
+      background: #f1f1f1;
+      border-radius: 3px;
+    }
+    
+    .educational-content::-webkit-scrollbar-thumb {
+      background: #cbd5e1; /* slate-300 */
+      border-radius: 3px;
+    }
+    
+    .educational-content::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8; /* slate-400 */
+    }
+    
+    /* Modal styles */
+    .modal-enter {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    
+    .modal-enter-active {
+      opacity: 1;
+      transform: translateY(0);
+      transition: opacity 200ms, transform 200ms;
+    }
+    
+    .modal-exit {
+      opacity: 1;
+    }
+    
+    .modal-exit-active {
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 200ms, transform 200ms;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    
+    .tooltip {
+
+      position: absolute;
+
+      bottom: 100%;
+
+      left: 50%;
+
+      transform: translateX(-50%) translateY(-10px);
+
+      background-color: #1f2937;
+
+      color: white;
+
+      padding: 8px 12px;
+
+      border-radius: 8px;
+
+      font-size: 14px;
+
+      white-space: nowrap;
+
+      opacity: 0;
+
+      pointer-events: none;
+
+      transition: opacity 0.3s ease-in-out;
+
+    }
+
+    .flood-zone:hover .tooltip {
+
+      opacity: 1;
+
+    }
+
+
+
+    .user-location-marker {
+
+      position: absolute;
+
+      width: 20px;
+
+      height: 20px;
+
+      background-color: #8b5cf6; /* violet-500 */
+
+      border-radius: 50%;
+
+      border: 3px solid white;
+
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+
+      transform: translate(-50%, -50%);
+
+      z-index: 10;
+
+    }
+
+
+
+    @keyframes pulse {
+
+      0% { transform: scale(1); }
+
+      50% { transform: scale(1.1); }
+
+      100% { transform: scale(1); }
+
+    }
+
+  </style>
+
+</head>
+
+<body>
+
+  <div class="app-container">
+
+    <!-- Map Section -->
+
+    <div class="map-section">
+
+      <div class="map-container">
+
+        <div id="map"></div>
+
+      </div>
+
+       
+
+      <!-- Floating Controls -->
+
+      <div class="floating-controls">
+
+        <button id="getLocationBtn" class="floating-btn primary">
+
+          🏠 Check My Flood Status
+
+        </button>
+
+        <button id="emergencyBtn" class="floating-btn emergency">
+
+          🚨 Emergency Alert
+
+        </button>
+
+        <button id="toggleOfflineBtn" class="floating-btn offline">
+
+          📱 Toggle Offline Mode
+
+        </button>
+
+      </div>
+
+       
+
+      <!-- Map Legend -->
+
+      <div class="map-legend">
+
+        <p class="font-bold mb-2">🌊 Flood Severity Legend</p>
+
+        <div class="flex items-center mb-1">
+
+          <div class="w-4 h-4 rounded-full bg-blue-500 mr-2"></div> Minor Waterlogging (0-50cm)
+
+        </div>
+
+        <div class="flex items-center mb-1">
+
+          <div class="w-4 h-4 rounded-full bg-amber-500 mr-2"></div> Moderate Flooding (50-150cm)
+
+        </div>
+
+        <div class="flex items-center mb-1">
+
+          <div class="w-4 h-4 rounded-full bg-red-500 mr-2"></div> Severe Flooding (150cm+)
+
+        </div>
+
+        <div class="flex items-center">
+
+          <div class="w-4 h-4 rounded-full bg-green-500 mr-2"></div> Safe Zone
+
+        </div>
+
+      </div>
+
+       
+
+      <!-- Offline Indicator -->
+
+      <div id="offlineIndicator" class="offline-indicator">
+
+        Offline Mode
+
+      </div>
+
+    </div>
+
+
+
+    <!-- Sidebar -->
+
+    <div id="sidebar" class="sidebar">
+
+      <div class="sidebar-header">
+
+        <h1 class="text-2xl font-bold mb-2">🌊 FLOOD ALERT AND NAVIGATION</h1>
+
+        <p class="text-sm opacity-90">Real-time flood monitoring & emergency response</p>
+
+    </div>
+
+
+
+      <div class="sidebar-content">
+
+        <!-- Dashboard -->
+
+        <div class="dashboard-grid">
+
+          <div class="dashboard-card">
+
+            <h3>🌊 Active Floods</h3>
+
+            <div id="floodStats" class="value">0</div>
+
+            <div class="subtitle">Currently monitored</div>
+
+          </div>
+
+          <div class="dashboard-card">
+
+            <h3>⚠️ Your Risk</h3>
+
+            <div id="userRiskLevel" class="value">LOW</div>
+
+            <div class="subtitle">Based on location</div>
+
+          </div>
+
+          <div class="dashboard-card">
+
+            <h3>🕐 Last Update</h3>
+
+            <div id="lastUpdateTime" class="value">--:--</div>
+
+            <div class="subtitle">Real-time monitoring</div>
+
+          </div>
+
+          <div class="dashboard-card">
+
+            <h3>📍 Location</h3>
+
+            <div id="userLocationDisplay" class="value">T Nagar</div>
+
+            <div class="subtitle">Your current area</div>
+
+          </div>
+
+    </div>
+
+
+
+        <!-- Status Panel -->
+
+        <div id="statusContainer" class="status-panel hidden">
+
+          <h2 class="text-lg font-bold mb-4">Your Flood Status</h2>
+
+          <div id="alertMessage" class="status-message mb-4"></div>
+
+          <div id="userInfo" class="text-sm text-gray-600 mb-2"></div>
+
+          <div id="safeRouteInfo" class="text-sm text-gray-600 mb-2"></div>
+
+          <div id="additionalInfo" class="text-sm text-gray-600"></div>
+
+      </div>
+
+         
+
+        <!-- Emergency Contacts -->
+
+        <div class="status-panel">
+
+          <h2 class="text-lg font-bold mb-4">🚨 Emergency Contacts</h2>
+
+          <div class="emergency-contacts">
+
+            <button onclick="callEmergency('police')" class="emergency-btn">🚔 Police: 100</button>
+
+            <button onclick="callEmergency('ambulance')" class="emergency-btn">🚑 Ambulance: 108</button>
+
+            <button onclick="callEmergency('fire')" class="emergency-btn">🚒 Fire: 101</button>
+
+            <button onclick="callEmergency('disasterManagement')" class="emergency-btn">🏛️ Disaster: 1070</button>
+
+            <button onclick="callEmergency('chennaiCorporation')" class="emergency-btn">🏢 Corporation</button>
+
+            <button onclick="callEmergency('floodControl')" class="emergency-btn">🌊 Flood Control</button>
+
+          </div>
+
+    </div>
+
+     
+
+        <!-- Route Planner -->
+
+        <div class="status-panel">
+
+          <h2 class="text-lg font-bold mb-4">🛣️ Smart Route Planner</h2>
+
+          <div class="form-group">
+
+            <label>From (Current Location)</label>
+
+            <input type="text" id="fromInput" placeholder="e.g., T Nagar" class="form-input">
+
+      </div>
+
+          <div class="form-group">
+
+            <label>To (Destination)</label>
+
+            <input type="text" id="toInput" placeholder="e.g., Anna Salai" class="form-input">
+
+          </div>
+
+          <button id="checkRouteBtn" class="btn purple">Check Route Safety</button>
+
+          <div id="routeStatus" class="mt-4 text-sm"></div>
+
+    </div>
+
+
+
+        <!-- SMS Alerts -->
+
+        <div class="status-panel">
+
+          <h2 class="text-lg font-bold mb-4">📱 SMS Alerts</h2>
+
+          <p class="text-sm text-gray-600 mb-4">Get real-time flood alerts via SMS, even without internet.</p>
+
+          <div class="form-group">
+
+            <label>Phone Number</label>
+
+            <input type="tel" id="phoneNumber" placeholder="+919876543210" class="form-input">
+
+          </div>
+
+          <button id="sendSmsBtn" class="btn success">Subscribe to SMS Alerts</button>
+
+          <div id="smsStatus" class="mt-4 text-sm hidden"></div>
+
+        </div>
+
+        <!-- Find Nearest Shelters -->
+        <div class="status-panel">
+          <h2 class="text-lg font-bold mb-4">🏠 Find Nearest Shelters</h2>
+          <p class="text-sm text-gray-600 mb-4">Locate the nearest safe shelters in your area during floods.</p>
+          
+          <div class="form-group">
+            <label>Your Current Area</label>
+            <input type="text" id="shelterLocation" placeholder="e.g., T Nagar, Nungambakkam" class="form-input">
+          </div>
+          
+          <div class="form-group">
+            <label>Search Radius (km)</label>
+            <select id="searchRadius" class="form-input">
+              <option value="1">1 km</option>
+              <option value="2" selected>2 km</option>
+              <option value="3">3 km</option>
+              <option value="5">5 km</option>
+            </select>
+          </div>
+          
+          <button id="findSheltersBtn" class="btn purple">Find Shelters</button>
+          
+          <div id="sheltersLoading" class="hidden mt-4 text-center">
+            <div class="inline-block animate-spin rounded-full h-5 w-5 border-b-2 border-purple-600"></div>
+            <p class="mt-2 text-sm text-gray-600">Finding nearby shelters...</p>
+          </div>
+          
+          <div id="sheltersResults" class="mt-4 hidden">
+            <h3 class="font-semibold mb-2 text-gray-700">🏡 Nearby Shelters</h3>
+            <div id="sheltersList" class="space-y-3">
+              <!-- Shelter items will be added here by JavaScript -->
+            </div>
+          </div>
+          
+          <div id="noSheltersFound" class="hidden mt-4 p-4 bg-yellow-50 text-yellow-700 rounded-lg text-sm">
+            No shelters found within the selected radius. Try increasing the search radius or contact emergency services for assistance.
+          </div>
+        </div>
+
+        <!-- Educational Resources -->
+        <div class="status-panel">
+            <div id="preparedness" class="tab-pane active">
+              <div class="bg-red-50 border-l-4 border-red-500 p-4 rounded-r-lg mb-4">
+                <div class="flex items-start">
+                  <div class="flex-shrink-0">
+                    <svg class="h-6 w-6 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                  </div>
+                  <div class="ml-3">
+                    <h3 class="text-lg font-semibold text-red-800 mb-2">Flood Preparedness Guide</h3>
+                    <div class="space-y-3 max-h-64 overflow-y-auto pr-2 custom-scrollbar">
+                      <div class="bg-white/70 p-3 rounded-lg border border-red-100 flex items-start">
+                        <span class="text-red-500 mr-2">•</span>
+                        <span class="text-gray-800"><strong>Know your risk:</strong> Check flood maps for your area and understand your elevation level.</span>
+                      </div>
+                      <div class="bg-white/70 p-3 rounded-lg border border-red-100 flex items-start">
+                        <span class="text-red-500 mr-2">•</span>
+                        <span class="text-gray-800"><strong>Evacuation plan:</strong> Identify multiple routes to safe locations and practice them with family.</span>
+                      </div>
+                      <div class="bg-white/70 p-3 rounded-lg border border-red-100 flex items-start">
+                        <span class="text-red-500 mr-2">•</span>
+                        <span class="text-gray-800"><strong>Emergency alerts:</strong> Sign up for local weather alerts and emergency notifications.</span>
+                      </div>
+                      <div class="bg-white/70 p-3 rounded-lg border border-red-100 flex items-start">
+                        <span class="text-red-500 mr-2">•</span>
+                        <span class="text-gray-800"><strong>Document safety:</strong> Store important documents in a waterproof and fireproof container.</span>
+                      </div>
+                      <div class="bg-white/70 p-3 rounded-lg border border-red-100 flex items-start">
+                        <span class="text-red-500 mr-2">•</span>
+                        <span class="text-gray-800"><strong>Utility safety:</strong> Learn how to shut off gas, electricity, and water supplies.</span>
+                      </div>
+                      <div class="bg-white/70 p-3 rounded-lg border border-red-100 flex items-start">
+                        <span class="text-red-500 mr-2">•</span>
+                        <span class="text-gray-800"><strong>Home protection:</strong> Install check valves and consider flood barriers.</span>
+                      </div>
+                      <div class="bg-white/70 p-3 rounded-lg border border-red-100 flex items-start">
+                        <span class="text-red-500 mr-2">⚠️</span>
+                        <span class="text-gray-800"><strong class="text-red-600">Flood Watch:</strong> Be prepared; flooding is possible in your area.</span>
+                      </div>
+                      <div class="bg-white/70 p-3 rounded-lg border border-red-100 flex items-start">
+                        <span class="text-red-500 mr-2">⚠️</span>
+                        <span class="text-gray-800"><strong class="text-red-600">Flood Warning:</strong> Take action; flooding is occurring or will occur soon.</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Emergency Kit Tab -->
+            <div id="emergency-kit" class="tab-pane">
+              <div class="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-lg">
+                <h3 class="font-semibold text-lg text-blue-800 mb-3 flex items-center">
+                  <svg class="w-5 h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+                  </svg>
+                  Emergency Kit Essentials
+                </h3>
+                <div class="max-h-64 overflow-y-auto pr-2 custom-scrollbar space-y-2">
+                <!-- Water Supply -->
+                <label class="flex items-start bg-white/80 p-3 rounded-lg hover:bg-blue-50 transition-colors">
+                  <input type="checkbox" class="mt-1 rounded border-blue-300 text-blue-600 focus:ring-blue-500 mr-3 h-4 w-4 flex-shrink-0">
+                  <div>
+                    <span class="font-medium text-gray-900">Water Supply</span>
+                    <p class="mt-0.5 text-sm text-gray-600">1 gallon per person per day (3-day minimum)</p>
+                  </div>
+                </label>
+                
+                <!-- Non-perishable Food -->
+                <label class="flex items-start bg-white/80 p-3 rounded-lg hover:bg-blue-50 transition-colors">
+                  <input type="checkbox" class="mt-1 rounded border-blue-300 text-blue-600 focus:ring-blue-500 mr-3 h-4 w-4 flex-shrink-0">
+                  <div>
+                    <span class="font-medium text-gray-900">Non-perishable Food</span>
+                    <p class="mt-0.5 text-sm text-gray-600">3-day supply, ready-to-eat items</p>
+                  </div>
+                </label>
+                
+                <!-- Light & Power -->
+                <label class="flex items-start bg-white/80 p-3 rounded-lg hover:bg-blue-50 transition-colors">
+                  <input type="checkbox" class="mt-1 rounded border-blue-300 text-blue-600 focus:ring-blue-500 mr-3 h-4 w-4 flex-shrink-0">
+                  <div>
+                    <span class="font-medium text-gray-900">Light & Power</span>
+                    <p class="mt-0.5 text-sm text-gray-600">Flashlight + extra batteries, portable charger</p>
+                  </div>
+                </label>
+                
+                <!-- First Aid & Medications -->
+                <label class="flex items-start bg-white/80 p-3 rounded-lg hover:bg-blue-50 transition-colors">
+                  <input type="checkbox" class="mt-1 rounded border-blue-300 text-blue-600 focus:ring-blue-500 mr-3 h-4 w-4 flex-shrink-0">
+                  <div>
+                    <span class="font-medium text-gray-900">First Aid & Medications</span>
+                    <p class="mt-0.5 text-sm text-gray-600">Basic first aid kit + 7-day medication supply</p>
+                  </div>
+                </label>
+                
+                <!-- Important Documents -->
+                <label class="flex items-start bg-white/80 p-3 rounded-lg hover:bg-blue-50 transition-colors">
+                  <input type="checkbox" class="mt-1 rounded border-blue-300 text-blue-600 focus:ring-blue-500 mr-3 h-4 w-4 flex-shrink-0">
+                  <div>
+                    <span class="font-medium text-gray-900">Important Documents</span>
+                    <p class="mt-0.5 text-sm text-gray-600">IDs, insurance, medical records (waterproof)</p>
+                  </div>
+                </label>
+                
+                <!-- Clothing & Bedding -->
+                <label class="flex items-start bg-white/80 p-3 rounded-lg hover:bg-blue-50 transition-colors">
+                  <input type="checkbox" class="mt-1 rounded border-blue-300 text-blue-600 focus:ring-blue-500 mr-3 h-4 w-4 flex-shrink-0">
+                  <div>
+                    <span class="font-medium text-gray-900">Clothing & Bedding</span>
+                    <p class="mt-0.5 text-sm text-gray-600">Warm clothing, sturdy shoes, emergency blanket</p>
+                  </div>
+                </label>
+                
+                <!-- Hygiene Kit -->
+                <label class="flex items-start bg-white/80 p-3 rounded-lg hover:bg-blue-50 transition-colors">
+                  <input type="checkbox" class="mt-1 rounded border-blue-300 text-blue-600 focus:ring-blue-500 mr-3 h-4 w-4 flex-shrink-0">
+                  <div>
+                    <span class="font-medium text-gray-900">Hygiene Kit</span>
+                    <p class="mt-0.5 text-sm text-gray-600">Sanitation supplies, personal hygiene items</p>
+                  </div>
+                </label>
+                
+                <!-- Tools & Safety -->
+                <label class="flex items-start bg-white/80 p-3 rounded-lg hover:bg-blue-50 transition-colors">
+                  <input type="checkbox" class="mt-1 rounded border-blue-300 text-blue-600 focus:ring-blue-500 mr-3 h-4 w-4 flex-shrink-0">
+                  <div>
+                    <span class="font-medium text-gray-900">Tools & Safety</span>
+                    <p class="mt-0.5 text-sm text-gray-600">Multi-tool, whistle, local maps, cash (small bills)</p>
+                  </div>
+                </label>
+              <div class="text-xs text-blue-700 bg-blue-100 p-2 rounded-lg mt-2">
+                <strong>Tip:</strong> Store your kit in an easy-to-carry bag and keep it in a known, accessible location.
+              </div>
+            </div>
+            
+            <!-- First Aid Tab -->
+            <div id="first-aid" class="tab-pane hidden">
+              <div class="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-lg">
+                <div class="flex items-center mb-4">
+                  <svg class="w-6 h-6 text-blue-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                  </svg>
+                  <h3 class="font-semibold text-xl text-blue-800">Emergency First Aid Guide</h3>
+                </div>
+                
+                <div class="space-y-4 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
+                  <!-- Wound Care -->
+                  <div class="bg-white p-4 rounded-lg border border-blue-100 shadow-sm">
+                    <h4 class="font-semibold text-blue-700 text-lg flex items-center mb-2">
+                      <svg class="w-5 h-5 mr-2 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      Wound Care
+                    </h4>
+                    <ul class="text-gray-700 space-y-2 pl-1">
+                      <li class="flex items-start">
+                        <span class="text-blue-500 mr-2">•</span>
+                        <div>
+                          <span class="font-medium">Minor Cuts & Scrapes:</span>
+                          <ul class="mt-1 space-y-1 ml-4">
+                            <li>Clean with clean water and mild soap</li>
+                            <li>Apply antibiotic ointment</li>
+                            <li>Cover with sterile bandage</li>
+                            <li>Change dressing daily or when wet/dirty</li>
+                          </ul>
+                        </div>
+                      </li>
+                      <li class="flex items-start">
+                        <span class="text-red-500 mr-2">⚠️</span>
+                        <span class="text-red-600">Seek medical help for:
+                          <ul class="list-disc ml-5 mt-1 space-y-1">
+                            <li>Deep or gaping wounds</li>
+                            <li>Bleeding that won't stop after 10 minutes of direct pressure</li>
+                            <li>Signs of infection (redness, swelling, pus, fever)</li>
+                          </ul>
+                        </span>
+                      </li>
+                    </ul>
+                  </div>
+
+                  <!-- CPR & Life Support -->
+                  <div class="bg-white p-4 rounded-lg border border-blue-100 shadow-sm">
+                    <h4 class="font-semibold text-blue-700 text-lg flex items-center mb-2">
+                      <svg class="w-5 h-5 mr-2 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                      </svg>
+                      CPR & Life Support (Adults)
+                    </h4>
+                    <div class="grid md:grid-cols-2 gap-4 text-gray-700">
+                      <div>
+                        <h5 class="font-medium text-blue-600 mb-1">For Unresponsive Adults:</h5>
+                        <ol class="list-decimal pl-5 space-y-1">
+                          <li>Check for responsiveness</li>
+                          <li>Call emergency services (112/911)</li>
+                          <li>30 chest compressions (2 inches deep, 100-120/min)</li>
+                          <li>2 rescue breaths</li>
+                          <li>Continue until help arrives</li>
+                        </ol>
+                      </div>
+                      <div>
+                        <h5 class="font-medium text-blue-600 mb-1">For Choking:</h5>
+                        <ul class="list-disc pl-5 space-y-1">
+                          <li>5 back blows between shoulder blades</li>
+                          <li>5 abdominal thrusts (Heimlich maneuver)</li>
+                          <li>Alternate until object is expelled</li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Waterborne Illness & Dehydration -->
+                  <div class="bg-white p-4 rounded-lg border border-blue-100 shadow-sm">
+                    <h4 class="font-semibold text-blue-700 text-lg flex items-center mb-2">
+                      <svg class="w-5 h-5 mr-2 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+                      </svg>
+                      Waterborne Illness & Dehydration
+                    </h4>
+                    <div class="grid md:grid-cols-2 gap-4">
+                      <div>
+                        <h5 class="font-medium text-blue-600 mb-1">Prevention:</h5>
+                        <ul class="text-gray-700 space-y-1">
+                          <li class="flex items-start">
+                            <span class="text-blue-500 mr-1">•</span>
+                            <span>Drink only bottled, boiled, or treated water</span>
+                          </li>
+                          <li class="flex items-start">
+                            <span class="text-blue-500 mr-1">•</span>
+                            <span>Avoid swallowing floodwater</span>
+                          </li>
+                          <li class="flex items-start">
+                            <span class="text-blue-500 mr-1">•</span>
+                            <span>Wash hands frequently with clean water and soap</span>
+                          </li>
+                        </ul>
+                      </div>
+                      <div>
+                        <h5 class="font-medium text-blue-600 mb-1">Symptoms to Watch For:</h5>
+                        <ul class="text-gray-700 space-y-1">
+                          <li class="flex items-start">
+                            <span class="text-red-500 mr-1">•</span>
+                            <span>Severe diarrhea or vomiting</span>
+                          </li>
+                          <li class="flex items-start">
+                            <span class="text-red-500 mr-1">•</span>
+                            <span>High fever (above 101°F/38.3°C)</span>
+                          </li>
+                          <li class="flex items-start">
+                            <span class="text-red-500 mr-1">•</span>
+                            <span>Signs of dehydration (dizziness, dry mouth, no urine output)</span>
+                          </li>
+                        </ul>
+                      </div>
+                    </div>
+                    <div class="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-100">
+                      <h5 class="font-medium text-blue-700 mb-1 flex items-center">
+                        <svg class="w-4 h-4 mr-1 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        First Aid for Dehydration:
+                      </h5>
+                      <ul class="text-sm text-gray-700 space-y-1">
+                        <li>Drink small sips of oral rehydration solution (ORS)</li>
+                        <li>Rest in a cool place</li>
+                        <li>Avoid caffeinated or alcoholic beverages</li>
+                        <li>Seek medical help if symptoms worsen</li>
+                      </ul>
+                    </div>
+                  </div>
+
+                  <!-- Fractures & Sprains -->
+                  <div class="bg-white p-4 rounded-lg border border-blue-100 shadow-sm">
+                    <h4 class="font-semibold text-blue-700 text-lg flex items-center mb-2">
+                      <svg class="w-5 h-5 mr-2 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      Fractures & Sprains
+                    </h4>
+                    <div class="grid md:grid-cols-2 gap-4">
+                      <div>
+                        <h5 class="font-medium text-blue-600 mb-1">For Suspected Fractures:</h5>
+                        <ul class="text-gray-700 space-y-1">
+                          <li>Immobilize the injured area</li>
+                          <li>Apply ice to reduce swelling</li>
+                          <li>Elevate the injured limb if possible</li>
+                          <li>Seek medical attention immediately</li>
+                        </ul>
+                      </div>
+                      <div>
+                        <h5 class="font-medium text-blue-600 mb-1">For Sprains (RICE Method):</h5>
+                        <ul class="text-gray-700 space-y-1">
+                          <li><span class="font-medium">R</span>est the injured area</li>
+                          <li><span class="font-medium">I</span>ce for 20 minutes every 2 hours</li>
+                          <li><span class="font-medium">C</span>ompression with an elastic bandage</li>
+                          <li><span class="font-medium">E</span>levate above heart level when possible</li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Emergency Contacts -->
+                  <div class="bg-white p-4 rounded-lg border border-blue-100 shadow-sm">
+                    <h4 class="font-semibold text-blue-700 text-lg flex items-center mb-3">
+                      <svg class="w-5 h-5 mr-2 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                      </svg>
+                      Emergency Contacts
+                    </h4>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <a href="tel:112" class="bg-red-50 hover:bg-red-100 text-red-700 p-3 rounded-lg flex items-center transition-colors">
+                        <div class="bg-red-100 p-2 rounded-full mr-3">
+                          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                        </div>
+                        <div>
+                          <div class="font-semibold">Emergency</div>
+                          <div class="text-sm">112 (Pan-India)</div>
+                        </div>
+                      </a>
+                      <a href="tel:102" class="bg-orange-50 hover:bg-orange-100 text-orange-700 p-3 rounded-lg flex items-center transition-colors">
+                        <div class="bg-orange-100 p-2 rounded-full mr-3">
+                          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                          </svg>
+                        </div>
+                        <div>
+                          <div class="font-semibold">Ambulance</div>
+                          <div class="text-sm">102 or 108</div>
+                        </div>
+                      </a>
+                      <a href="tel:100" class="bg-blue-50 hover:bg-blue-100 text-blue-700 p-3 rounded-lg flex items-center transition-colors">
+                        <div class="bg-blue-100 p-2 rounded-full mr-3">
+                          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                          </svg>
+                        </div>
+                        <div>
+                          <div class="font-semibold">Police</div>
+                          <div class="text-sm">100</div>
+                        </div>
+                      </a>
+                      <a href="tel:108" class="bg-green-50 hover:bg-green-100 text-green-700 p-3 rounded-lg flex items-center transition-colors">
+                        <div class="bg-green-100 p-2 rounded-full mr-3">
+                          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
+                          </svg>
+                        </div>
+                        <div>
+                          <div class="font-semibold">Disaster Management</div>
+                          <div class="text-sm">108</div>
+                        </div>
+                      </a>
+                    </div>
+                    <div class="mt-3 p-3 bg-yellow-50 border-l-4 border-yellow-400 rounded-r">
+                      <div class="flex">
+                        <div class="flex-shrink-0">
+                          <svg class="h-5 w-5 text-yellow-600" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                          </svg>
+                        </div>
+                        <div class="ml-3">
+                          <p class="text-sm text-yellow-700">
+                            <strong>Note:</strong> Save these numbers in your phone and keep a written copy in your emergency kit.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Snake Bites & Animal Bites -->
+                  <div class="bg-white p-4 rounded-lg border border-blue-100 shadow-sm">
+                    <h4 class="font-semibold text-blue-700 text-lg flex items-center mb-2">
+                      <svg class="w-5 h-5 mr-2 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      Snake Bites & Animal Bites
+                    </h4>
+                    <div class="grid md:grid-cols-2 gap-4">
+                      <div>
+                        <h5 class="font-medium text-blue-600 mb-1">For Snake Bites:</h5>
+                        <ul class="text-gray-700 space-y-1">
+                          <li>Stay calm and keep the affected limb still</li>
+                          <li>Remove any tight clothing or jewelry</li>
+                          <li>Keep the bite area at or below heart level</li>
+                          <li><span class="font-medium text-red-600">DO NOT</span> cut the wound or try to suck out venom</li>
+                          <li><span class="font-medium text-red-600">DO NOT</span> apply a tourniquet</li>
+                          <li>Seek medical help immediately</li>
+                        </ul>
+                      </div>
+                      <div>
+                        <h5 class="font-medium text-blue-600 mb-1">For Animal Bites:</h5>
+                        <ul class="text-gray-700 space-y-1">
+                          <li>Wash the wound thoroughly with soap and clean water</li>
+                          <li>Apply an antibiotic ointment</li>
+                          <li>Cover with a clean bandage</li>
+                          <li>Watch for signs of infection</li>
+                          <li>Seek medical attention for deep wounds or if the animal was wild</li>
+                          <li>Report the bite to local animal control</li>
+                        </ul>
+                      </div>
+                    </div>
+                    <div class="mt-3 p-3 bg-red-50 border-l-4 border-red-400 rounded-r">
+                      <div class="flex">
+                        <div class="flex-shrink-0">
+                          <svg class="h-5 w-5 text-red-600" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                          </svg>
+                        </div>
+                        <div class="ml-3">
+                          <p class="text-sm text-red-700">
+                            <strong>Rabies Alert:</strong> If bitten by a stray or wild animal, seek medical attention immediately for potential rabies exposure.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+
+
+    <!-- Sidebar Toggle -->
+
+    <button id="sidebarToggle" class="sidebar-toggle">
+
+      <span id="toggleIcon">☰</span>
+
+    </button>
+
+  </div>
+
+   
+
+  <!-- Message Box -->
+
+  <div id="messageBox" class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-lg shadow-2xl p-6 hidden z-[9999] max-w-md">
+
+    <p id="messageText" class="text-gray-800 mb-4"></p>
+
+    <button id="messageCloseBtn" class="btn">OK</button>
+
+  </div>
+
+   
+
+  <!-- SMS Notification Panel -->
+
+  <div id="smsNotificationPanel" class="fixed bottom-4 right-4 w-80 bg-white rounded-lg shadow-xl overflow-hidden z-[9998] hidden">
+
+    <div class="bg-blue-600 text-white px-4 py-2 flex justify-between items-center">
+
+      <h3 class="font-semibold">📱 SMS Alerts</h3>
+
+      <button id="closeSmsPanel" class="text-white hover:text-gray-200">×</button>
+
+    </div>
+
+    <div id="smsMessages" class="max-h-96 overflow-y-auto p-4 space-y-3">
+
+      <!-- Messages will be added here -->
+
+    </div>
+
+  </div>
+
+
+
+  <script>
+
+    // Global variables for Firebase configuration. These are automatically provided by the platform.
+
+    const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+
+    const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+
+    const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+
+
+    // Message box functions to replace alert().
+
+    const messageBox = document.getElementById('messageBox');
+
+    const messageText = document.getElementById('messageText');
+
+    const messageCloseBtn = document.getElementById('messageCloseBtn');
+
+
+
+    function showMessage(message) {
+
+      messageText.textContent = message;
+
+      messageBox.classList.remove('hidden');
+
+    }
+
+
+
+    messageCloseBtn.addEventListener('click', () => {
+
+      messageBox.classList.add('hidden');
+
+    });
+
+
+
+    // Event listeners
+
+    document.getElementById('getLocationBtn').addEventListener('click', checkFloodStatus);
+
+    document.getElementById('emergencyBtn').addEventListener('click', triggerEmergency);
+
+    document.getElementById('toggleOfflineBtn').addEventListener('click', toggleOfflineMode);
+
+    document.getElementById('checkRouteBtn').addEventListener('click', checkRoute);
+
+    document.getElementById('sendSmsBtn').addEventListener('click', async (e) => {
+
+      e.preventDefault();
+
+      try {
+
+        await subscribeForSms();
+
+      } catch (error) {
+
+        console.error('Error in SMS subscription:', error);
+
+        showMessage('❌ Error processing your request. Please try again.');
+
+      }
+
+    });
+
+    document.getElementById('sidebarToggle').addEventListener('click', toggleSidebar);
+
+    // Shelter database with 60+ locations across Chennai
+    const sheltersDatabase = {
+      't nagar': [
+        { name: 'Sri Sankara Senior Secondary School', type: 'school', lat: 13.0420, lon: 80.2345, capacity: 500, contact: '044-24995555' },
+        { name: 'Natesan Park Community Hall', type: 'community hall', lat: 13.0430, lon: 80.2350, capacity: 200, contact: '044-24333666' },
+        { name: 'MCTM Kalyana Mandapam', type: 'marriage hall', lat: 13.0440, lon: 80.2330, capacity: 1000, contact: '044-24333777' },
+        { name: 'The Residency Towers', type: 'hostel', lat: 13.0410, lon: 80.2360, capacity: 150, contact: '044-28150505' },
+        { name: 'YMCA College of Physical Education', type: 'college', lat: 13.0450, lon: 80.2320, capacity: 300, contact: '044-24333678' }
+      ],
+      'annanagar': [
+        { name: 'Anna Nagar Tower Park Community Hall', type: 'community hall', lat: 13.0900, lon: 80.2080, capacity: 250, contact: '044-26264444' },
+        { name: 'Vivekananda Vidyalaya', type: 'school', lat: 13.0920, lon: 80.2100, capacity: 600, contact: '044-26261111' },
+        { name: 'Sai Ram Engineering College', type: 'college', lat: 13.0880, lon: 80.2050, capacity: 400, contact: '044-26555555' },
+        { name: 'Grand Residency Hotel', type: 'hostel', lat: 13.0910, lon: 80.2090, capacity: 120, contact: '044-26263333' },
+        { name: 'Srinivasa Kalyana Mandapam', type: 'marriage hall', lat: 13.0890, lon: 80.2070, capacity: 800, contact: '044-26267777' }
+      ],
+      'adyar': [
+        { name: 'PS Senior Secondary School', type: 'school', lat: 13.0060, lon: 80.2580, capacity: 550, contact: '044-24410789' },
+        { name: 'Adyar Kalyana Mandapam', type: 'marriage hall', lat: 13.0080, lon: 80.2560, capacity: 900, contact: '044-24410987' },
+        { name: 'YMCA Nandanam', type: 'community center', lat: 13.0070, lon: 80.2550, capacity: 300, contact: '044-24411234' },
+        { name: 'Green Park Hotel', type: 'hostel', lat: 13.0050, lon: 80.2570, capacity: 180, contact: '044-24415678' },
+        { name: 'IIT Madras Hostel Block', type: 'hostel', lat: 12.9915, lon: 80.2334, capacity: 1000, contact: '044-22578200' }
+      ],
+      'mylapore': [
+        { name: 'San Thome HSS', type: 'school', lat: 13.0330, lon: 80.2780, capacity: 450, contact: '044-24995432' },
+        { name: 'Kapaleeshwarar Kalyana Mandapam', type: 'marriage hall', lat: 13.0350, lon: 80.2770, capacity: 750, contact: '044-24987654' },
+        { name: 'Mylapore Community Hall', type: 'community hall', lat: 13.0340, lon: 80.2760, capacity: 220, contact: '044-24981234' },
+        { name: 'Hotel Palmgrove', type: 'hostel', lat: 13.0335, lon: 80.2750, capacity: 160, contact: '044-28110332' },
+        { name: 'Vivekananda College', type: 'college', lat: 13.0320, lon: 80.2740, capacity: 350, contact: '044-24671234' }
+      ],
+      'velachery': [
+        { name: 'Velammal Matriculation School', type: 'school', lat: 12.9800, lon: 80.2180, capacity: 500, contact: '044-22460222' },
+        { name: 'Vijaya Nagar Community Hall', type: 'community hall', lat: 12.9820, lon: 80.2170, capacity: 200, contact: '044-22461111' },
+        { name: 'Sai Baba Kalyana Mandapam', type: 'marriage hall', lat: 12.9810, lon: 80.2160, capacity: 850, contact: '044-22462222' },
+        { name: 'GRT Grand Hotel', type: 'hostel', lat: 12.9830, lon: 80.2150, capacity: 140, contact: '044-28150500' },
+        { name: 'Velachery Sports Complex', type: 'sports complex', lat: 12.9790, lon: 80.2140, capacity: 300, contact: '044-22465555' }
+      ],
+      'porur': [
+        { name: 'St. Joseph Public School', type: 'school', lat: 13.0350, lon: 80.1580, capacity: 480, contact: '044-24765555' },
+        { name: 'Porur Kalyana Mandapam', type: 'marriage hall', lat: 13.0340, lon: 80.1570, capacity: 900, contact: '044-24766666' },
+        { name: 'Porur Community Hall', type: 'community hall', lat: 13.0360, lon: 80.1590, capacity: 250, contact: '044-24767777' },
+        { name: 'Green Park Hotel Porur', type: 'hostel', lat: 13.0355, lon: 80.1585, capacity: 130, contact: '044-24768888' },
+        { name: 'SRM University Hostel', type: 'hostel', lat: 13.0370, lon: 80.1600, capacity: 800, contact: '044-24769999' }
+      ],
+      'tambaram': [
+        { name: 'Santhome HSS', type: 'school', lat: 12.9250, lon: 80.1200, capacity: 520, contact: '044-22264567' },
+        { name: 'Tambaram Kalyana Mandapam', type: 'marriage hall', lat: 12.9240, lon: 80.1210, capacity: 950, contact: '044-22265678' },
+        { name: 'Tambaram Community Hall', type: 'community hall', lat: 12.9260, lon: 80.1190, capacity: 280, contact: '044-22266789' },
+        { name: 'Hotel Green Park', type: 'hostel', lat: 12.9255, lon: 80.1205, capacity: 150, contact: '044-22267890' },
+        { name: 'Meenakshi College of Engineering', type: 'college', lat: 12.9270, lon: 80.1180, capacity: 600, contact: '044-22268901' }
+      ],
+      'chromepet': [
+        { name: 'Kendriya Vidyalaya', type: 'school', lat: 12.9510, lon: 80.1410, capacity: 490, contact: '044-22750000' },
+        { name: 'Chromepet Kalyana Mandapam', type: 'marriage hall', lat: 12.9520, lon: 80.1420, capacity: 880, contact: '044-22751111' },
+        { name: 'Chromepet Community Hall', type: 'community hall', lat: 12.9500, lon: 80.1400, capacity: 260, contact: '044-22752222' },
+        { name: 'Hotel Green Park Chromepet', type: 'hostel', lat: 12.9515, lon: 80.1415, capacity: 140, contact: '044-22753333' },
+        { name: 'Sathyabama University Hostel', type: 'hostel', lat: 12.9530, lon: 80.1430, capacity: 750, contact: '044-22754444' }
+      ],
+      'guindy': [
+        { name: 'D.A.V. Boys Senior Secondary School', type: 'school', lat: 13.0070, lon: 80.2130, capacity: 510, contact: '044-22350000' },
+        { name: 'Guindy Kalyana Mandapam', type: 'marriage hall', lat: 13.0080, lon: 80.2140, capacity: 920, contact: '044-22351111' },
+        { name: 'Guindy Community Hall', type: 'community hall', lat: 13.0060, lon: 80.2120, capacity: 270, contact: '044-22352222' },
+        { name: 'Hotel Green Park Guindy', type: 'hostel', lat: 13.0075, lon: 80.2135, capacity: 130, contact: '044-22353333' },
+        { name: 'Anna University Hostel', type: 'hostel', lat: 13.0090, lon: 80.2150, capacity: 900, contact: '044-22354444' }
+      ],
+      'nungambakkam': [
+        { name: 'SBOA School', type: 'school', lat: 13.0600, lon: 80.2410, capacity: 530, contact: '044-28270000' },
+        { name: 'Nungambakkam Kalyana Mandapam', type: 'marriage hall', lat: 13.0610, lon: 80.2420, capacity: 940, contact: '044-28271111' },
+        { name: 'Nungambakkam Community Hall', type: 'community hall', lat: 13.0590, lon: 80.2400, capacity: 290, contact: '044-28272222' },
+        { name: 'The Raintree Hotel', type: 'hostel', lat: 13.0605, lon: 80.2415, capacity: 150, contact: '044-28273333' },
+        { name: 'Loyola College Hostel', type: 'hostel', lat: 13.0620, lon: 80.2430, capacity: 800, contact: '044-28274444' }
+      ],
+      'kk nagar': [
+        { name: 'Padma Seshadri Bala Bhavan', type: 'school', lat: 13.0470, lon: 80.2010, capacity: 490, contact: '044-24750000' },
+        { name: 'KK Nagar Kalyana Mandapam', type: 'marriage hall', lat: 13.0480, lon: 80.2020, capacity: 910, contact: '044-24751111' },
+        { name: 'KK Nagar Community Hall', type: 'community hall', lat: 13.0460, lon: 80.2000, capacity: 250, contact: '044-24752222' },
+        { name: 'Hotel Green Park KK Nagar', type: 'hostel', lat: 13.0475, lon: 80.2015, capacity: 140, contact: '044-24753333' },
+        { name: 'D.G. Vaishnav College Hostel', type: 'hostel', lat: 13.0490, lon: 80.2030, capacity: 700, contact: '044-24754444' }
+      ],
+      'ashok nagar': [
+        { name: 'Vidya Mandir Senior Secondary School', type: 'school', lat: 13.0370, lon: 80.2110, capacity: 510, contact: '044-24890000' },
+        { name: 'Ashok Nagar Kalyana Mandapam', type: 'marriage hall', lat: 13.0380, lon: 80.2120, capacity: 930, contact: '044-24891111' },
+        { name: 'Ashok Nagar Community Hall', type: 'community hall', lat: 13.0360, lon: 80.2100, capacity: 270, contact: '044-24892222' },
+        { name: 'Hotel Green Park Ashok Nagar', type: 'hostel', lat: 13.0375, lon: 80.2115, capacity: 130, contact: '044-24893333' },
+        { name: 'MOP Vaishnav College Hostel', type: 'hostel', lat: 13.0390, lon: 80.2130, capacity: 750, contact: '044-24894444' }
+      ]
+    };
+
+    // Handle shelter search
+    document.getElementById('findSheltersBtn').addEventListener('click', async function() {
+      const locationInput = document.getElementById('shelterLocation').value.trim().toLowerCase();
+      const radius = parseInt(document.getElementById('searchRadius').value);
+      
+      if (!locationInput) {
+        showMessage('Please enter a location to find nearby shelters.');
+        return;
+      }
+      
+      // Show loading state
+      document.getElementById('sheltersLoading').classList.remove('hidden');
+      document.getElementById('sheltersResults').classList.add('hidden');
+      document.getElementById('noSheltersFound').classList.add('hidden');
+      
+      try {
+        // First, try to geocode the location
+        const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(locationInput + ', Chennai, India')}`);
+        const data = await response.json();
+        
+        if (data && data.length > 0) {
+          const { lat, lon, display_name } = data[0];
+          
+          // Center map on the found location
+          map.setView([parseFloat(lat), parseFloat(lon)], 15);
+          
+          // Add a marker for the searched location
+          if (window.searchMarker) {
+            map.removeLayer(window.searchMarker);
+          }
+          window.searchMarker = L.marker([lat, lon], {
+            icon: L.divIcon({
+              className: 'search-location-marker',
+              html: '📍',
+              iconSize: [30, 30],
+              iconAnchor: [15, 30]
+            })
+          }).addTo(map).bindPopup(`<b>${display_name}</b><br>Searching for shelters nearby...`).openPopup();
+          
+          // Find matching shelters
+          const matchingShelters = [];
+          const normalizedInput = locationInput.toLowerCase();
+          
+          // Check if we have data for the exact location
+          if (sheltersDatabase[normalizedInput]) {
+            matchingShelters.push(...sheltersDatabase[normalizedInput]);
+          } else {
+            // If no exact match, find similar locations
+            for (const [area, shelters] of Object.entries(sheltersDatabase)) {
+              if (area.includes(normalizedInput) || normalizedInput.includes(area)) {
+                matchingShelters.push(...shelters);
+              }
+            }
+            
+            // If still no matches, use a default location (T Nagar in this case)
+            if (matchingShelters.length === 0 && sheltersDatabase['t nagar']) {
+              matchingShelters.push(...sheltersDatabase['t nagar']);
+            }
+          }
+          
+          // Add markers for each shelter on the map
+          matchingShelters.forEach(shelter => {
+            const marker = L.marker([shelter.lat, shelter.lon], {
+              icon: L.divIcon({
+                className: 'shelter-marker',
+                html: '🏠',
+                iconSize: [25, 25],
+                iconAnchor: [12, 25]
+              })
+            }).addTo(map).bindPopup(`
+              <b>${shelter.name}</b><br>
+              Type: ${shelter.type}<br>
+              Capacity: ${shelter.capacity} people
+            `);
+          });
+          
+          // Update UI with results
+          updateSheltersList(matchingShelters, radius);
+          
+        } else {
+          showMessage('Location not found. Please try a different area name.');
+          document.getElementById('sheltersLoading').classList.add('hidden');
+        }
+        
+      } catch (error) {
+        console.error('Error finding location:', error);
+        showMessage('Error finding location. Please try again.');
+        document.getElementById('sheltersLoading').classList.add('hidden');
+      }
+    });
+
+    // Function to update shelters list in the UI
+    function updateSheltersList(shelters, radius) {
+      const sheltersList = document.getElementById('sheltersList');
+      const resultsContainer = document.getElementById('sheltersResults');
+      const noSheltersFound = document.getElementById('noSheltersFound');
+      
+      // Clear previous results
+      sheltersList.innerHTML = '';
+      
+      if (shelters.length === 0) {
+        noSheltersFound.classList.remove('hidden');
+        resultsContainer.classList.add('hidden');
+        document.getElementById('sheltersLoading').classList.add('hidden');
+        return;
+      }
+      
+      // Limit to 5 shelters for display
+      const limitedShelters = shelters.slice(0, 5);
+      
+      // Add each shelter to the list
+      limitedShelters.forEach((shelter, index) => {
+        const shelterElement = document.createElement('div');
+        shelterElement.className = 'bg-white p-3 rounded-lg shadow-sm border border-gray-100';
+        
+        // Get icon based on shelter type
+        let icon = '🏢'; // Default icon
+        switch(shelter.type) {
+          case 'school':
+            icon = '🏫';
+            break;
+          case 'college':
+            icon = '🎓';
+            break;
+          case 'hospital':
+            icon = '🏥';
+            break;
+          case 'community hall':
+          case 'community center':
+            icon = '🏛️';
+            break;
+          case 'marriage hall':
+            icon = '💒';
+            break;
+          case 'hostel':
+            icon = '🏨';
+            break;
+        }
+        
+        shelterElement.innerHTML = `
+          <div class="flex items-start">
+            <span class="text-2xl mr-3 mt-1">${icon}</span>
+            <div class="flex-1">
+              <h4 class="font-semibold text-gray-800">${shelter.name}</h4>
+              <div class="flex justify-between items-center mt-1">
+                <span class="text-xs text-gray-500">${shelter.type}</span>
+                <span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">${shelter.capacity} people</span>
+              </div>
+              <div class="mt-2">
+                <span class="text-xs text-green-600 font-medium">${(Math.random() * 2 + 0.5).toFixed(1)} km away</span>
+                <button onclick="navigateToShelter(${shelter.lat}, ${shelter.lon})" 
+                        class="text-xs ml-2 text-blue-600 hover:underline">
+                  Get Directions
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+        
+        sheltersList.appendChild(shelterElement);
+      });
+      
+      // Show results
+      resultsContainer.classList.remove('hidden');
+      noSheltersFound.classList.add('hidden');
+      document.getElementById('sheltersLoading').classList.add('hidden');
+    }
+
+    // Function to navigate to a shelter on the map
+    window.navigateToShelter = function(lat, lon) {
+      // Center the map on the selected shelter
+      map.setView([lat, lon], 16);
+      
+      // Also provide an option to open in Google Maps
+      if (confirm('Open in Google Maps for directions?')) {
+        const url = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lon}&travelmode=walking`;
+        window.open(url, '_blank');
+      }
+    };
+
+     
+
+    // SMS Panel Controls
+
+    const smsPanel = document.getElementById('smsNotificationPanel');
+
+    document.addEventListener('click', (e) => {
+
+      // Close panel when clicking outside
+
+      if (smsPanel && !smsPanel.contains(e.target) && !e.target.closest('#showSmsPanel')) {
+
+        smsPanel.classList.add('hidden');
+
+      }
+
+    });
+
+     
+
+    // Close button for SMS panel
+
+    const closeBtn = document.getElementById('closeSmsPanel');
+
+    if (closeBtn) {
+
+      closeBtn.addEventListener('click', () => {
+
+        smsPanel.classList.add('hidden');
+
+      });
+
+    }
+
+
+
+    // Function to generate water levels with specific distribution
+
+    function getBalancedWaterLevel(index, total) {
+
+      // First 60% will be high (red)
+
+      if (index < total * 0.6) return Math.floor(151 + Math.random() * 150); // 151-300
+
+      // Next 13.33% will be medium (amber)
+
+      if (index < total * 0.733) return Math.floor(51 + Math.random() * 100); // 51-150
+
+      // Next 13.33% will be low (blue)
+
+      if (index < total * 0.866) return Math.floor(1 + Math.random() * 50);  // 1-50
+
+      // Last 13.33% will be none (green)
+
+      return 0;
+
+    }
+
+     
+
+    // Function to get a random water level that can change over time
+
+    function getDynamicWaterLevel(baseLevel) {
+
+      // For initial load, use a smaller range to maintain distribution
+
+      // but still allow some natural variation
+
+      const variationRange = baseLevel < 10 ? 5 : // For very low levels, minimal variation
+
+             baseLevel < 50 ? 10 :  // For low levels, small variation
+
+             baseLevel < 150 ? 15 : // For medium levels, moderate variation
+
+             20;          // For high levels, larger variation
+
+   
+
+      // Calculate change within the dynamic range, but don't let it go below 0
+
+      const change = Math.floor(Math.random() * (variationRange * 2 + 1)) - variationRange;
+
+      return Math.max(0, baseLevel + change);
+
+    }
+
+     
+
+    // Function to add a street with balanced water levels
+
+    function addStreet(id, streetName, lat, lon, index, total, riskLevel, streetType, zone, shelterNearby) {
+
+      const baseWaterLevel = getBalancedWaterLevel(index, total);
+
+      const waterLevel = getDynamicWaterLevel(baseWaterLevel);
+
+       
+
+      // Determine initial severity based on water level
+
+      let severity = 'none';
+
+      if (waterLevel >= 150) {
+
+        severity = 'high';
+
+      } else if (waterLevel >= 50) {
+
+        severity = 'medium';
+
+      } else if (waterLevel >= 10) {
+
+        severity = 'low';
+
+      }
+
+       
+
+      return {
+
+        id: id,
+
+        streetName: streetName,
+
+        lat: lat,
+
+        lon: lon,
+
+        waterLevel_cm: waterLevel,
+
+        baseWaterLevel: baseWaterLevel, // Store base level for dynamic updates
+
+        severity: severity, // Set initial severity based on water level
+
+        predictedArrival: null,
+
+        shelterNearby: shelterNearby,
+
+        lastUpdated: new Date(),
+
+        riskLevel: riskLevel,
+
+        streetType: streetType,
+
+        zone: zone
+
+      };
+
+    }
+
+     
+
+    // Total number of streets for distribution calculation
+
+    let streetIndex = 0;
+
+     
+
+    // Total number of streets for distribution calculation
+
+    let totalStreets = 180; // Total number of streets we'll be adding
+
+     
+
+    // Comprehensive Chennai city-wide street-level flood monitoring dataset
+
+    let floodData = [
+
+      // ZONE 1: CENTRAL CHENNAI - High Risk Areas
+
+      addStreet('1', 'Anna Salai (Mount Road)', 13.0604, 80.2494, 0, totalStreets, 'high', 'Main Road', 'Central', 'Government General Hospital'),
+
+      addStreet('2', 'Pondy Bazaar Main Road', 13.0407, 80.2344, 1, totalStreets, 'high', 'Commercial', 'Central', 'T Nagar Community Center'),
+
+      addStreet('3', 'North Usman Road', 13.0415, 80.2330, 2, totalStreets, 'high', 'Commercial', 'Central', 'T Nagar Bus Stand'),
+
+      addStreet('4', 'South Usman Road', 13.0395, 80.2350, 3, totalStreets, 'high', 'Commercial', 'Central', 'T Nagar Railway Station'),
+
+      addStreet('5', 'Pondy Bazaar 1st Street', 13.0400, 80.2340, 4, totalStreets, 'medium', 'Residential', 'Central', 'T Nagar Community Center'),
+
+      addStreet('6', 'Pondy Bazaar 2nd Street', 13.0410, 80.2335, 5, totalStreets, 'medium', 'Residential', 'Central', 'T Nagar Community Center'),
+
+      addStreet('7', 'Pondy Bazaar 3rd Street', 13.0420, 80.2330, 6, totalStreets, 'medium', 'Residential', 'Central', 'T Nagar Community Center'),
+
+      addStreet('8', 'Pondy Bazaar 4th Street', 13.0430, 80.2325, 7, totalStreets, 'medium', 'Residential', 'Central', 'T Nagar Community Center'),
+
+      addStreet('9', 'Pondy Bazaar 5th Street', 13.0440, 80.2320, 8, totalStreets, 'medium', 'Residential', 'Central', 'T Nagar Community Center'),
+
+      addStreet('10', 'Kodambakkam High Road', 13.0600, 80.2200, 9, totalStreets, 'medium', 'Main Road', 'Central', 'Kodambakkam Railway Station'),
+
+      addStreet('11', 'Nungambakkam High Road', 13.0650, 80.2250, 10, totalStreets, 'medium', 'Main Road', 'Central', 'Nungambakkam Railway Station'),
+
+      addStreet('12', 'Egmore High Road', 13.0800, 80.2600, 11, totalStreets, 'medium', 'Main Road', 'Central', 'Egmore Railway Station'),
+
+      addStreet('13', 'Chetpet High Road', 13.0750, 80.2550, 12, totalStreets, 'medium', 'Main Road', 'Central', 'Chetpet Railway Station'),
+
+       
+
+      // ZONE 2: MYLAPORE - Coastal High Risk
+
+      addStreet('14', 'Luz Church Road', 13.0339, 80.2617, 13, totalStreets, 'high', 'Commercial', 'Mylapore', 'Mylapore Kapaleeswarar Temple'),
+
+      addStreet('15', 'Kutchery Road', 13.0320, 80.2600, 14, totalStreets, 'high', 'Commercial', 'Mylapore', 'Mylapore Kapaleeswarar Temple'),
+
+      addStreet('16', 'Luz Avenue', 13.0350, 80.2620, 15, totalStreets, 'medium', 'Residential', 'Mylapore', 'Mylapore Kapaleeswarar Temple'),
+
+      addStreet('17', 'Luz Corner', 13.0340, 80.2610, 16, totalStreets, 'medium', 'Residential', 'Mylapore', 'Mylapore Kapaleeswarar Temple'),
+
+      addStreet('19', 'Mylapore Tank Road', 13.0320, 80.2620, 17, totalStreets, 'high', 'Commercial', 'Mylapore', 'Mylapore Kapaleeswarar Temple'),
+
+      addStreet('20', 'Luz Church Road 1st Street', 13.0340, 80.2620, 18, totalStreets, 'medium', 'Residential', 'Mylapore', 'Mylapore Kapaleeswarar Temple'),
+
+      addStreet('21', 'Luz Church Road 2nd Street', 13.0350, 80.2625, 19, totalStreets, 'medium', 'Residential', 'Mylapore', 'Mylapore Kapaleeswarar Temple'),
+
+      addStreet('22', 'Luz Church Road 3rd Street', 13.0360, 80.2630, 20, totalStreets, 'medium', 'Residential', 'Mylapore', 'Mylapore Kapaleeswarar Temple'),
+
+       
+
+      // ZONE 3: TRIPLICANE - High Risk Coastal
+
+      addStreet('23', 'Pycrofts Road', 13.0604, 80.2617, 21, totalStreets, 'high', 'Commercial', 'Triplicane', 'Triplicane High School'),
+
+      addStreet('24', 'Triplicane High Road', 13.0610, 80.2620, 22, totalStreets, 'high', 'Commercial', 'Triplicane', 'Triplicane High School'),
+
+      addStreet('25', 'Wallajah Road', 13.0590, 80.2610, 23, totalStreets, 'high', 'Commercial', 'Triplicane', 'Triplicane High School'),
+
+      addStreet('26', 'Pycrofts Garden Road', 13.0620, 80.2630, 24, totalStreets, 'medium', 'Residential', 'Triplicane', 'Triplicane High School'),
+
+      addStreet('27', 'Triplicane 1st Main Road', 13.0615, 80.2625, 25, totalStreets, 'high', 'Commercial', 'Triplicane', 'Triplicane High School'),
+
+      addStreet('28', 'Triplicane 2nd Main Road', 13.0620, 80.2630, 26, totalStreets, 'high', 'Commercial', 'Triplicane', 'Triplicane High School'),
+
+      addStreet('29', 'Triplicane 3rd Main Road', 13.0625, 80.2635, 27, totalStreets, 'medium', 'Residential', 'Triplicane', 'Triplicane High School'),
+
+      addStreet('30', 'Triplicane 4th Main Road', 13.0630, 80.2640, 28, totalStreets, 'medium', 'Residential', 'Triplicane', 'Triplicane High School'),
+
+       
+
+      // ZONE 4: ADYAR - Coastal High Risk
+
+      addStreet('31', 'Adyar Main Road', 13.0040, 80.2208, 29, totalStreets, 'high', 'Main Road', 'Adyar', 'Adyar Cancer Institute'),
+
+      addStreet('32', 'Besant Nagar 1st Main Road', 13.0050, 80.2210, 30, totalStreets, 'high', 'Commercial', 'Adyar', 'Adyar Cancer Institute'),
+
+      addStreet('33', 'Besant Nagar 2nd Main Road', 13.0060, 80.2215, 31, totalStreets, 'high', 'Commercial', 'Adyar', 'Adyar Cancer Institute'),
+
+      addStreet('34', 'Besant Nagar 3rd Main Road', 13.0070, 80.2220, 32, totalStreets, 'medium', 'Residential', 'Adyar', 'Adyar Cancer Institute'),
+
+      addStreet('35', 'Besant Nagar 4th Main Road', 13.0080, 80.2225, 33, totalStreets, 'medium', 'Residential', 'Adyar', 'Adyar Cancer Institute'),
+
+      addStreet('38', 'Adyar 1st Cross Street', 13.0045, 80.2210, 34, totalStreets, 'medium', 'Residential', 'Adyar', 'Adyar Cancer Institute'),
+
+      addStreet('39', 'Adyar 2nd Cross Street', 13.0050, 80.2215, 35, totalStreets, 'medium', 'Residential', 'Adyar', 'Adyar Cancer Institute'),
+
+      addStreet('40', 'Adyar 3rd Cross Street', 13.0055, 80.2220, 36, totalStreets, 'medium', 'Residential', 'Adyar', 'Adyar Cancer Institute'),
+
+       
+
+      // ZONE 5: VELACHERY - High Risk Marshland
+
+      addStreet('41', 'Velachery Main Road', 12.9819, 80.2200, 37, totalStreets, 'high', 'Main Road', 'Velachery', 'Velachery Railway Station'),
+
+      addStreet('42', 'Velachery 1st Main Road', 12.9825, 80.2205, 38, totalStreets, 'high', 'Commercial', 'Velachery', 'Velachery Railway Station'),
+
+      addStreet('43', 'Velachery 2nd Main Road', 12.9830, 80.2210, 39, totalStreets, 'high', 'Commercial', 'Velachery', 'Velachery Railway Station'),
+
+      addStreet('44', 'Velachery 3rd Main Road', 12.9835, 80.2215, 40, totalStreets, 'medium', 'Residential', 'Velachery', 'Velachery Railway Station'),
+
+      addStreet('45', 'Velachery 4th Main Road', 12.9840, 80.2220, 41, totalStreets, 'medium', 'Residential', 'Velachery', 'Velachery Railway Station'),
+
+      addStreet('46', 'OMR - Sholinganallur', 12.8992, 80.2208, 42, totalStreets, 'medium', 'Main Road', 'Velachery', 'Sholinganallur IT Park'),
+
+      addStreet('47', 'OMR - Taramani', 12.9200, 80.2300, 43, totalStreets, 'medium', 'Main Road', 'Velachery', 'Taramani IT Park'),
+
+      addStreet('48', 'OMR - Thoraipakkam', 12.9100, 80.2250, 44, totalStreets, 'medium', 'Main Road', 'Velachery', 'Thoraipakkam IT Park'),
+
+      addStreet('49', 'Pallikaranai Main Road', 12.9250, 80.1944, 45, totalStreets, 'high', 'Main Road', 'Velachery', 'Pallikaranai Marshland'),
+
+      addStreet('50', 'Medavakkam Main Road', 12.9200, 80.2000, 46, totalStreets, 'high', 'Main Road', 'Velachery', 'Medavakkam Bus Stand'),
+
+       
+
+      // ZONE 6: TAMBARAM - South Chennai
+
+      addStreet('51', 'GST Road - Tambaram', 12.9249, 80.1094, 47, totalStreets, 'medium', 'Main Road', 'Tambaram', 'Tambaram Railway Station'),
+
+      addStreet('52', 'Tambaram Main Road', 12.9250, 80.1100, 48, totalStreets, 'medium', 'Commercial', 'Tambaram', 'Tambaram Railway Station'),
+
+      addStreet('53', 'Chromepet Main Road', 12.9519, 80.1394, 49, totalStreets, 'low', 'Main Road', 'Tambaram', 'Chromepet Railway Station'),
+
+      addStreet('54', 'Pallavaram Main Road', 12.9600, 80.1500, 50, totalStreets, 'low', 'Main Road', 'Tambaram', 'Pallavaram Railway Station'),
+
+      addStreet('55', 'Tambaram 1st Main Road', 12.9260, 80.1110, 51, totalStreets, 'medium', 'Commercial', 'Tambaram', 'Tambaram Railway Station'),
+
+      addStreet('56', 'Tambaram 2nd Main Road', 12.9270, 80.1120, 52, totalStreets, 'medium', 'Commercial', 'Tambaram', 'Tambaram Railway Station'),
+
+      addStreet('57', 'Tambaram 3rd Main Road', 12.9280, 80.1130, 53, totalStreets, 'low', 'Residential', 'Tambaram', 'Tambaram Railway Station'),
+
+      addStreet('58', 'Tambaram 4th Main Road', 12.9290, 80.1140, 54, totalStreets, 'low', 'Residential', 'Tambaram', 'Tambaram Railway Station'),
+
+      addStreet('59', 'Tambaram 5th Main Road', 12.9300, 80.1150, 55, totalStreets, 'low', 'Residential', 'Tambaram', 'Tambaram Railway Station'),
+
+      addStreet('60', 'Tambaram 6th Main Road', 12.9310, 80.1160, 56, totalStreets, 'low', 'Residential', 'Tambaram', 'Tambaram Railway Station'),
+
+       
+
+      // ZONE 7: NORTH CHENNAI - Tondiarpet, Royapuram, Washermanpet
+
+      addStreet('61', 'Tondiarpet High Road', 13.1200, 80.2800, 57, totalStreets, 'medium', 'Main Road', 'North Chennai', 'Tondiarpet Railway Station'),
+
+      addStreet('62', 'Royapuram High Road', 13.1100, 80.2900, 58, totalStreets, 'high', 'Main Road', 'North Chennai', 'Royapuram Railway Station'),
+
+      addStreet('63', 'Washermanpet High Road', 13.1000, 80.2700, 59, totalStreets, 'medium', 'Main Road', 'North Chennai', 'Washermanpet Metro Station'),
+
+      addStreet('64', 'Mint Street', 13.0900, 80.2800, 60, totalStreets, 'low', 'Commercial', 'North Chennai', 'Mint Metro Station'),
+
+      addStreet('65', 'Broadway', 13.0800, 80.2900, 61, totalStreets, 'low', 'Commercial', 'North Chennai', 'Broadway Metro Station'),
+
+      addStreet('69', 'Tondiarpet 1st Main Road', 13.1300, 80.2750, 62, totalStreets, 'low', 'Residential', 'North Chennai', 'Tondiarpet Railway Station'),
+
+      addStreet('70', 'Tondiarpet 2nd Main Road', 13.1350, 80.2800, 63, totalStreets, 'low', 'Residential', 'North Chennai', 'Tondiarpet Railway Station'),
+
+       
+
+      // ZONE 7.1: CHINTADRIPET - Central Chennai
+
+      addStreet('131', 'Arunachalam Street', 13.0750, 80.2750, 64, totalStreets, 'medium', 'Commercial', 'Chintadripet', 'Chintadripet Railway Station'),
+
+      addStreet('132', 'Chintadripet Main Road', 13.0800, 80.2700, 65, totalStreets, 'medium', 'Main Road', 'Chintadripet', 'Chintadripet Railway Station'),
+
+      addStreet('133', 'Chintadripet 1st Street', 13.0820, 80.2720, 66, totalStreets, 'low', 'Residential', 'Chintadripet', 'Chintadripet Railway Station'),
+
+      addStreet('134', 'Chintadripet 2nd Street', 13.0780, 80.2680, 67, totalStreets, 'low', 'Residential', 'Chintadripet', 'Chintadripet Railway Station'),
+
+       
+
+      // ZONE 14: ANNA NAGAR - West Central Chennai
+
+      addStreet('135', 'Anna Nagar Main Road', 13.0900, 80.2100, 68, totalStreets, 'low', 'Main Road', 'Anna Nagar', 'Anna Nagar Bus Stand'),
+
+      addStreet('136', 'Anna Nagar 1st Avenue', 13.0920, 80.2120, 69, totalStreets, 'low', 'Residential', 'Anna Nagar', 'Anna Nagar Bus Stand'),
+
+      addStreet('137', 'Anna Nagar 2nd Avenue', 13.0880, 80.2080, 70, totalStreets, 'low', 'Residential', 'Anna Nagar', 'Anna Nagar Bus Stand'),
+
+      addStreet('138', 'Anna Nagar 3rd Avenue', 13.0940, 80.2140, 71, totalStreets, 'low', 'Residential', 'Anna Nagar', 'Anna Nagar Bus Stand'),
+
+      addStreet('139', 'Anna Nagar 4th Avenue', 13.0860, 80.2060, 72, totalStreets, 'low', 'Residential', 'Anna Nagar', 'Anna Nagar Bus Stand'),
+
+       
+
+      // ZONE 15: KILPAUK - North Central Chennai
+
+      addStreet('140', 'Kilpauk Garden Road', 13.0700, 80.2400, 73, totalStreets, 'medium', 'Main Road', 'Kilpauk', 'Kilpauk Medical College'),
+
+      addStreet('141', 'Kilpauk Main Road', 13.0720, 80.2420, 74, totalStreets, 'medium', 'Main Road', 'Kilpauk', 'Kilpauk Medical College'),
+
+      // New sensors added in under-monitored areas
+      addStreet('142', 'Thiruvottiyur High Road', 13.1580, 80.3000, 75, totalStreets, 'high', 'Main Road', 'North Chennai', 'Thiruvottiyur Railway Station'),
+      addStreet('143', 'Manali New Town', 13.1800, 80.2700, 76, totalStreets, 'medium', 'Residential', 'North Chennai', 'Manali New Town Bus Stand'),
+      addStreet('145', 'Mogappair East Main Road', 13.0850, 80.1900, 78, totalStreets, 'low', 'Main Road', 'West Chennai', 'Mogappair Bus Stand'),
+      addStreet('146', 'Ambattur Industrial Estate', 13.1000, 80.1600, 79, totalStreets, 'medium', 'Industrial', 'West Chennai', 'Ambattur Railway Station'),
+      addStreet('147', 'Poonamallee High Road', 13.0400, 80.1700, 80, totalStreets, 'medium', 'Main Road', 'West Chennai', 'Poonamallee Bus Stand'),
+      addStreet('148', 'Nesapakkam Main Road', 13.0350, 80.1950, 81, totalStreets, 'low', 'Residential', 'West Chennai', 'Nesapakkam Bus Stop'),
+      addStreet('149', 'Perumbakkam Main Road', 12.9100, 80.1950, 82, totalStreets, 'high', 'Main Road', 'South Chennai', 'Perumbakkam Bus Stand'),
+      addStreet('151', 'Kelambakkam Main Road', 12.8700, 80.2300, 84, totalStreets, 'medium', 'Main Road', 'South Chennai', 'Kelambakkam Bus Stand'),
+
+      // Additional 20 sensors in under-monitored areas
+      addStreet('152', 'Thirumazhisai Main Road', 13.0800, 80.1000, 85, totalStreets, 'medium', 'Main Road', 'West Chennai', 'Thirumazhisai Bus Stand'),
+      addStreet('153', 'Poonamallee Bypass Road', 13.0500, 80.1200, 86, totalStreets, 'low', 'Highway', 'West Chennai', 'Poonamallee Bus Stand'),
+      addStreet('154', 'Manapakkam Main Road', 12.9800, 80.2000, 87, totalStreets, 'medium', 'Main Road', 'West Chennai', 'Manapakkam Bus Stop'),
+      addStreet('155', 'Porur Junction', 13.0350, 80.1600, 88, totalStreets, 'high', 'Junction', 'West Chennai', 'Porur Bus Stand'),
+      addStreet('156', 'Maduravoyal Bypass', 13.0650, 80.1700, 89, totalStreets, 'medium', 'Highway', 'West Chennai', 'Maduravoyal Bus Stand'),
+      
+      // North Chennai Additions
+      addStreet('157', 'Tiruvottiyur Koliwada', 13.1700, 80.3100, 90, totalStreets, 'high', 'Coastal Road', 'North Chennai', 'Tiruvottiyur Bus Stand'),
+      addStreet('160', 'Manali New Town Phase 2', 13.1900, 80.2800, 93, totalStreets, 'medium', 'Residential', 'North Chennai', 'Manali New Town Bus Stand'),
+      addStreet('161', 'Tiruvottiyur Market', 13.1600, 80.3000, 94, totalStreets, 'high', 'Commercial', 'North Chennai', 'Tiruvottiyur Market'),
+      
+      // South Chennai Additions
+      addStreet('162', 'Sholinganallur 1st Main Road', 12.9000, 80.2300, 95, totalStreets, 'medium', 'Main Road', 'South Chennai', 'Sholinganallur Bus Stand'),
+      addStreet('163', 'Semmenchery Main Road', 12.8900, 80.2400, 96, totalStreets, 'low', 'Main Road', 'South Chennai', 'Semmenchery Bus Stop'),
+      addStreet('164', 'Karanai Main Road', 12.8800, 80.2500, 97, totalStreets, 'medium', 'Main Road', 'South Chennai', 'Karanai Bus Stop'),
+      addStreet('165', 'Uthandi Beach Road', 12.9000, 80.2550, 98, totalStreets, 'high', 'Coastal Road', 'South Chennai', 'Uthandi Bus Stop'),
+      addStreet('166', 'Kelambakkam-Vandalur Road', 12.8700, 80.1000, 99, totalStreets, 'medium', 'Main Road', 'South Chennai', 'Vandalur Bus Stand'),
+      addStreet('172', 'Kelambakkam Main Road', 12.9300, 80.2300, 100, totalStreets, 'medium', 'Main Road', 'South Chennai', 'Kelambakkam Bus Stand'),
+      
+      // Central Chennai Additions
+      addStreet('167', 'Thirumangalam Main Road', 13.0700, 80.2150, 100, totalStreets, 'medium', 'Main Road', 'Central Chennai', 'Thirumangalam Bus Stand'),
+      addStreet('168', 'Koyambedu Market Road', 13.0750, 80.2000, 101, totalStreets, 'high', 'Commercial', 'Central Chennai', 'Koyambedu Market'),
+      addStreet('169', 'Vadapalani 1st Main Road', 13.0520, 80.2120, 102, totalStreets, 'medium', 'Main Road', 'Central Chennai', 'Vadapalani Bus Stand'),
+      addStreet('170', 'Ashok Nagar 1st Main Road', 13.0400, 80.2100, 103, totalStreets, 'medium', 'Residential', 'Central Chennai', 'Ashok Nagar Bus Stand'),
+      addStreet('171', 'T. Nagar 6th Main Road', 13.0420, 80.2400, 104, totalStreets, 'high', 'Commercial', 'Central Chennai', 'T. Nagar Bus Stand'),
+
+      // Additional 20 sensors in under-monitored areas
+      // West Chennai Industrial Areas
+      addStreet('175', 'Ambattur Industrial Estate 2nd Phase', 13.1100, 80.1500, 108, totalStreets, 'medium', 'Industrial', 'West Chennai', 'Ambattur Industrial Estate'),
+      addStreet('176', 'Mogappair West Main Road', 13.0900, 80.1800, 109, totalStreets, 'medium', 'Main Road', 'West Chennai', 'Mogappair West Bus Stop'),
+      addStreet('177', 'Pattaravakkam Main Road', 13.0700, 80.1900, 110, totalStreets, 'medium', 'Main Road', 'West Chennai', 'Pattaravakkam Bus Stop'),
+      
+      // Central Chennai Commercial Areas
+      addStreet('181', 'Nungambakkam 2nd Street', 13.0660, 80.2400, 114, totalStreets, 'medium', 'Commercial', 'Central Chennai', 'Nungambakkam Railway Station'),
+      addStreet('182', 'Teynampet Main Road', 13.0360, 80.2450, 115, totalStreets, 'high', 'Main Road', 'Central Chennai', 'Teynampet Bus Stand'),
+      addStreet('183', 'Alwarpet 1st Street', 13.0340, 80.2500, 116, totalStreets, 'medium', 'Residential', 'Central Chennai', 'Alwarpet Bus Stop'),
+      
+      // South Chennai IT Corridor
+      addStreet('184', 'Sholinganallur OMR', 12.9100, 80.2300, 117, totalStreets, 'medium', 'Main Road', 'South Chennai', 'Sholinganallur IT Park'),
+      addStreet('185', 'Karapakkam Main Road', 12.9200, 80.2350, 118, totalStreets, 'medium', 'Main Road', 'South Chennai', 'Karapakkam Bus Stop'),
+      addStreet('186', 'Perungudi Lake Area', 12.9700, 80.2400, 119, totalStreets, 'high', 'Lake Area', 'South Chennai', 'Perungudi Bus Stand'),
+      
+      // North Chennai Residential Areas
+      addStreet('187', 'Tiruvottiyur 2nd Main Road', 13.1650, 80.3050, 120, totalStreets, 'medium', 'Residential', 'North Chennai', 'Tiruvottiyur Bus Stand'),
+      addStreet('188', 'Tiruvottiyur 3rd Main Road', 13.1700, 80.3100, 121, totalStreets, 'low', 'Residential', 'North Chennai', 'Tiruvottiyur Bus Stand'),
+      
+      // West Chennai Residential Areas
+      addStreet('189', 'Mogappair 3rd Main Road', 13.0800, 80.1850, 122, totalStreets, 'low', 'Residential', 'West Chennai', 'Mogappair Bus Stand'),
+      addStreet('190', 'Mogappair 4th Main Road', 13.0850, 80.1800, 123, totalStreets, 'low', 'Residential', 'West Chennai', 'Mogappair Bus Stand'),
+      addStreet('191', 'Ambattur 1st Main Road', 13.1050, 80.1550, 124, totalStreets, 'medium', 'Residential', 'West Chennai', 'Ambattur Bus Stand'),
+
+      addStreet('142', 'Kilpauk 1st Street', 13.0740, 80.2440, 75, totalStreets, 'low', 'Residential', 'Kilpauk', 'Kilpauk Medical College'),
+
+      addStreet('143', 'Kilpauk 2nd Street', 13.0680, 80.2380, 76, totalStreets, 'low', 'Residential', 'Kilpauk', 'Kilpauk Medical College'),
+
+       
+
+      // ZONE 16: PURASAIWALKKAM - West Chennai
+
+      addStreet('144', 'Purasaiwalkkam High Road', 13.0600, 80.2000, 77, totalStreets, 'low', 'Main Road', 'Purasaiwalkkam', 'Purasaiwalkkam Bus Stand'),
+
+      addStreet('145', 'Purasaiwalkkam Main Road', 13.0620, 80.2020, 78, totalStreets, 'low', 'Commercial', 'Purasaiwalkkam', 'Purasaiwalkkam Bus Stand'),
+
+      addStreet('146', 'Purasaiwalkkam 1st Street', 13.0640, 80.2040, 79, totalStreets, 'low', 'Residential', 'Purasaiwalkkam', 'Purasaiwalkkam Bus Stand'),
+
+      addStreet('147', 'Purasaiwalkkam 2nd Street', 13.0580, 80.1980, 80, totalStreets, 'low', 'Residential', 'Purasaiwalkkam', 'Purasaiwalkkam Bus Stand'),
+
+       
+
+      // ZONE 17: SAIDAPET - South Central Chennai
+
+      addStreet('148', 'Saidapet Main Road', 13.0200, 80.2200, 81, totalStreets, 'medium', 'Main Road', 'Saidapet', 'Saidapet Railway Station'),
+
+      addStreet('149', 'Saidapet High Road', 13.0220, 80.2220, 82, totalStreets, 'medium', 'Main Road', 'Saidapet', 'Saidapet Railway Station'),
+
+      addStreet('150', 'Saidapet 1st Street', 13.0240, 80.2240, 83, totalStreets, 'low', 'Residential', 'Saidapet', 'Saidapet Railway Station'),
+
+      addStreet('151', 'Saidapet 2nd Street', 13.0180, 80.2180, 84, totalStreets, 'low', 'Residential', 'Saidapet', 'Saidapet Railway Station'),
+
+       
+
+      // ZONE 18: GUINDY - South Chennai
+
+      addStreet('152', 'Guindy Main Road', 13.0100, 80.2300, 85, totalStreets, 'medium', 'Main Road', 'Guindy', 'Guindy Railway Station'),
+
+      addStreet('153', 'Guindy High Road', 13.0120, 80.2320, 86, totalStreets, 'medium', 'Main Road', 'Guindy', 'Guindy Railway Station'),
+
+      addStreet('154', 'Guindy 1st Street', 13.0140, 80.2340, 87, totalStreets, 'low', 'Residential', 'Guindy', 'Guindy Railway Station'),
+
+      addStreet('155', 'Guindy 2nd Street', 13.0080, 80.2280, 88, totalStreets, 'low', 'Residential', 'Guindy', 'Guindy Railway Station'),
+
+       
+
+      // ZONE 19: KOTTURPURAM - South Chennai
+
+      addStreet('156', 'Kotturpuram Main Road', 13.0000, 80.2400, 89, totalStreets, 'medium', 'Main Road', 'Kotturpuram', 'Kotturpuram Railway Station'),
+
+      addStreet('157', 'Kotturpuram High Road', 13.0020, 80.2420, 90, totalStreets, 'medium', 'Main Road', 'Kotturpuram', 'Kotturpuram Railway Station'),
+
+      addStreet('158', 'Kotturpuram 1st Street', 13.0040, 80.2440, 91, totalStreets, 'low', 'Residential', 'Kotturpuram', 'Kotturpuram Railway Station'),
+
+      addStreet('159', 'Kotturpuram 2nd Street', 12.9980, 80.2380, 92, totalStreets, 'low', 'Residential', 'Kotturpuram', 'Kotturpuram Railway Station'),
+
+       
+
+      // ZONE 20: KOTTIVAKKAM - South Chennai
+
+      addStreet('160', 'Kottivakkam Main Road', 12.9900, 80.2500, 93, totalStreets, 'low', 'Main Road', 'Kottivakkam', 'Kottivakkam Bus Stand'),
+
+      addStreet('161', 'Kottivakkam High Road', 12.9920, 80.2520, 94, totalStreets, 'low', 'Main Road', 'Kottivakkam', 'Kottivakkam Bus Stand'),
+
+      addStreet('162', 'Kottivakkam 1st Street', 12.9940, 80.2540, 95, totalStreets, 'low', 'Residential', 'Kottivakkam', 'Kottivakkam Bus Stand'),
+
+      addStreet('163', 'Kottivakkam 2nd Street', 12.9880, 80.2480, 96, totalStreets, 'low', 'Residential', 'Kottivakkam', 'Kottivakkam Bus Stand'),
+
+       
+
+      // ZONE 8: WEST CHENNAI - Ambattur, Avadi, Poonamallee
+
+      addStreet('71', 'Ambattur Industrial Estate', 13.1000, 80.1500, 97, totalStreets, 'medium', 'Main Road', 'West Chennai', 'Ambattur Railway Station'),
+
+      addStreet('72', 'Avadi High Road', 13.1200, 80.1000, 98, totalStreets, 'low', 'Main Road', 'West Chennai', 'Avadi Railway Station'),
+
+      addStreet('73', 'Poonamallee High Road', 13.0500, 80.0800, 99, totalStreets, 'low', 'Main Road', 'West Chennai', 'Poonamallee Bus Stand'),
+
+      addStreet('74', 'Ambattur OT', 13.1100, 80.1600, 100, totalStreets, 'medium', 'Commercial', 'West Chennai', 'Ambattur Railway Station'),
+
+      addStreet('75', 'Avadi Main Road', 13.1250, 80.1050, 101, totalStreets, 'low', 'Commercial', 'West Chennai', 'Avadi Railway Station'),
+
+      addStreet('76', 'Poonamallee Main Road', 13.0600, 80.0850, 102, totalStreets, 'low', 'Commercial', 'West Chennai', 'Poonamallee Bus Stand'),
+
+      addStreet('77', 'Ambattur 1st Street', 13.1050, 80.1550, 103, totalStreets, 'low', 'Residential', 'West Chennai', 'Ambattur Railway Station'),
+
+      addStreet('78', 'Ambattur 2nd Street', 13.1080, 80.1580, 104, totalStreets, 'low', 'Residential', 'West Chennai', 'Ambattur Railway Station'),
+
+      addStreet('79', 'Avadi 1st Street', 13.1280, 80.1080, 105, totalStreets, 'low', 'Residential', 'West Chennai', 'Avadi Railway Station'),
+
+      addStreet('80', 'Avadi 2nd Street', 13.1300, 80.1100, 106, totalStreets, 'low', 'Residential', 'West Chennai', 'Avadi Railway Station'),
+
+       
+
+      // ZONE 9: EAST CHENNAI - Ennore, Manali, Minjur
+
+      addStreet('81', 'Ennore High Road', 13.2000, 80.3200, 107, totalStreets, 'high', 'Main Road', 'East Chennai', 'Ennore Railway Station'),
+
+      addStreet('82', 'Manali High Road', 13.1800, 80.3000, 108, totalStreets, 'medium', 'Main Road', 'East Chennai', 'Manali Railway Station'),
+
+      addStreet('83', 'Minjur Road', 13.1600, 80.2800, 109, totalStreets, 'low', 'Main Road', 'East Chennai', 'Minjur Bus Stand'),
+
+      addStreet('85', 'Manali New Town', 13.1850, 80.3050, 110, totalStreets, 'medium', 'Commercial', 'East Chennai', 'Manali Railway Station'),
+
+      addStreet('86', 'Minjur Main Road', 13.1650, 80.2850, 111, totalStreets, 'low', 'Commercial', 'East Chennai', 'Minjur Bus Stand'),
+
+      addStreet('87', 'Ennore 1st Street', 13.1950, 80.3150, 112, totalStreets, 'high', 'Residential', 'East Chennai', 'Ennore Railway Station'),
+
+      addStreet('88', 'Ennore 2nd Street', 13.1980, 80.3180, 113, totalStreets, 'high', 'Residential', 'East Chennai', 'Ennore Railway Station'),
+
+      addStreet('89', 'Manali 1st Street', 13.1820, 80.3020, 114, totalStreets, 'medium', 'Residential', 'East Chennai', 'Manali Railway Station'),
+
+      addStreet('90', 'Manali 2nd Street', 13.1850, 80.3050, 115, totalStreets, 'medium', 'Residential', 'East Chennai', 'Manali Railway Station'),
+
+       
+
+      // ZONE 10: SOUTHWEST CHENNAI - Porur, Poonamallee, Sriperumbudur
+
+      addStreet('91', 'Porur High Road', 13.0000, 80.1500, 116, totalStreets, 'low', 'Main Road', 'Southwest Chennai', 'Porur Bus Stand'),
+
+      addStreet('92', 'Sriperumbudur Road', 12.9500, 80.1000, 117, totalStreets, 'low', 'Main Road', 'Southwest Chennai', 'Sriperumbudur Bus Stand'),
+
+      addStreet('93', 'Porur Main Road', 13.0050, 80.1550, 118, totalStreets, 'low', 'Commercial', 'Southwest Chennai', 'Porur Bus Stand'),
+
+      addStreet('94', 'Sriperumbudur Main Road', 12.9550, 80.1050, 119, totalStreets, 'low', 'Commercial', 'Southwest Chennai', 'Sriperumbudur Bus Stand'),
+
+      addStreet('95', 'Porur 1st Street', 13.0020, 80.1520, 120, totalStreets, 'low', 'Residential', 'Southwest Chennai', 'Porur Bus Stand'),
+
+      addStreet('96', 'Porur 2nd Street', 13.0040, 80.1540, 121, totalStreets, 'low', 'Residential', 'Southwest Chennai', 'Porur Bus Stand'),
+
+      addStreet('97', 'Sriperumbudur 1st Street', 12.9520, 80.1020, 122, totalStreets, 'low', 'Residential', 'Southwest Chennai', 'Sriperumbudur Bus Stand'),
+
+      addStreet('98', 'Sriperumbudur 2nd Street', 12.9540, 80.1040, 123, totalStreets, 'low', 'Residential', 'Southwest Chennai', 'Sriperumbudur Bus Stand'),
+
+      addStreet('99', 'Porur 3rd Street', 13.0060, 80.1560, 124, totalStreets, 'low', 'Residential', 'Southwest Chennai', 'Porur Bus Stand'),
+
+      addStreet('100', 'Sriperumbudur 3rd Street', 12.9560, 80.1060, 125, totalStreets, 'low', 'Residential', 'Southwest Chennai', 'Sriperumbudur Bus Stand'),
+
+       
+
+      // ZONE 11: CENTRAL BUSINESS DISTRICT - Mount Road, Egmore, Nungambakkam
+
+      addStreet('101', 'Mount Road - Anna Salai', 13.0600, 80.2500, 126, totalStreets, 'medium', 'Main Road', 'Central Business District', 'Mount Road Metro Station'),
+
+      addStreet('102', 'Egmore High Road', 13.0800, 80.2600, 127, totalStreets, 'medium', 'Main Road', 'Central Business District', 'Egmore Railway Station'),
+
+      addStreet('103', 'Nungambakkam High Road', 13.0500, 80.2400, 128, totalStreets, 'low', 'Main Road', 'Central Business District', 'Nungambakkam Metro Station'),
+
+      addStreet('104', 'Poonamallee High Road - Central', 13.0400, 80.2300, 129, totalStreets, 'low', 'Main Road', 'Central Business District', 'Poonamallee Metro Station'),
+
+      addStreet('105', 'Luz Church Road - Central', 13.0300, 80.2200, 130, totalStreets, 'low', 'Commercial', 'Central Business District', 'Luz Metro Station'),
+
+      addStreet('106', 'Pondy Bazaar - Central', 13.0200, 80.2100, 131, totalStreets, 'low', 'Commercial', 'Central Business District', 'Pondy Bazaar Metro Station'),
+
+      addStreet('107', 'T Nagar - Central', 13.0100, 80.2000, 132, totalStreets, 'low', 'Commercial', 'Central Business District', 'T Nagar Metro Station'),
+
+      addStreet('108', 'Mylapore - Central', 13.0000, 80.1900, 133, totalStreets, 'low', 'Commercial', 'Central Business District', 'Mylapore Metro Station'),
+
+      addStreet('109', 'Triplicane - Central', 12.9900, 80.1800, 134, totalStreets, 'low', 'Commercial', 'Central Business District', 'Triplicane Metro Station'),
+
+      addStreet('110', 'Adyar - Central', 12.9800, 80.1700, 135, totalStreets, 'low', 'Commercial', 'Central Business District', 'Adyar Metro Station'),
+
+       
+
+      // ZONE 12: IT CORRIDOR - OMR, ECR, Sholinganallur, Kelambakkam
+
+      addStreet('111', 'OMR - Sholinganallur', 12.9000, 80.2000, 136, totalStreets, 'medium', 'Main Road', 'IT Corridor', 'Sholinganallur IT Park'),
+
+      addStreet('112', 'OMR - Kelambakkam', 12.8500, 80.1800, 137, totalStreets, 'medium', 'Main Road', 'IT Corridor', 'Kelambakkam IT Park'),
+
+      addStreet('113', 'ECR - Sholinganallur', 12.8900, 80.2100, 138, totalStreets, 'medium', 'Main Road', 'IT Corridor', 'Sholinganallur IT Park'),
+
+      addStreet('114', 'ECR - Kelambakkam', 12.8400, 80.1900, 139, totalStreets, 'medium', 'Main Road', 'IT Corridor', 'Kelambakkam IT Park'),
+
+      addStreet('115', 'OMR - Thoraipakkam', 12.9200, 80.2200, 140, totalStreets, 'medium', 'Main Road', 'IT Corridor', 'Thoraipakkam IT Park'),
+
+      addStreet('116', 'Sholinganallur Main Road', 12.9050, 80.2050, 141, totalStreets, 'medium', 'Commercial', 'IT Corridor', 'Sholinganallur IT Park'),
+
+      addStreet('117', 'Kelambakkam Main Road', 12.8550, 80.1850, 142, totalStreets, 'medium', 'Commercial', 'IT Corridor', 'Kelambakkam IT Park'),
+
+       
+
+      // ZONE 13: AIRPORT AREA - Meenambakkam, Pallavaram, St. Thomas Mount
+
+      addStreet('121', 'Airport Road - Meenambakkam', 12.9800, 80.1600, 143, totalStreets, 'medium', 'Main Road', 'Airport Area', 'Chennai Airport'),
+
+      addStreet('122', 'Pallavaram High Road', 12.9700, 80.1500, 144, totalStreets, 'low', 'Main Road', 'Airport Area', 'Pallavaram Railway Station'),
+
+      addStreet('123', 'St. Thomas Mount Road', 12.9600, 80.1400, 145, totalStreets, 'low', 'Main Road', 'Airport Area', 'St. Thomas Mount Railway Station'),
+
+      addStreet('124', 'Meenambakkam Main Road', 12.9850, 80.1650, 146, totalStreets, 'medium', 'Commercial', 'Airport Area', 'Chennai Airport'),
+
+      addStreet('125', 'Pallavaram Main Road', 12.9750, 80.1550, 147, totalStreets, 'low', 'Commercial', 'Airport Area', 'Pallavaram Railway Station'),
+
+      addStreet('126', 'St. Thomas Mount Main Road', 12.9650, 80.1450, 148, totalStreets, 'low', 'Commercial', 'Airport Area', 'St. Thomas Mount Railway Station'),
+
+      addStreet('127', 'Meenambakkam 1st Street', 12.9820, 80.1620, 149, totalStreets, 'medium', 'Residential', 'Airport Area', 'Chennai Airport'),
+
+      addStreet('128', 'Meenambakkam 2nd Street', 12.9840, 80.1640, 150, totalStreets, 'medium', 'Residential', 'Airport Area', 'Chennai Airport'),
+
+      addStreet('129', 'Pallavaram 1st Street', 12.9720, 80.1520, 151, totalStreets, 'low', 'Residential', 'Airport Area', 'Pallavaram Railway Station'),
+
+      addStreet('130', 'Pallavaram 2nd Street', 12.9740, 80.1540, 152, totalStreets, 'low', 'Residential', 'Airport Area', 'Pallavaram Railway Station'),
+
+       
+
+      // NEW SENSORS ADDED - SEPT 2025
+
+      // ZONE 21: VELACHERY - South Chennai
+
+      addStreet('131', 'Velachery Main Road', 12.9819, 80.2139, 153, totalStreets, 'high', 'Main Road', 'Velachery', 'Velachery Railway Station'),
+
+      addStreet('132', 'Velachery Bypass Road', 12.9830, 80.2150, 154, totalStreets, 'medium', 'Main Road', 'Velachery', 'Velachery Bus Depot'),
+
+      addStreet('133', '100 Feet Road', 12.9850, 80.2170, 155, totalStreets, 'high', 'Commercial', 'Velachery', 'Phoenix Market City'),
+
+      addStreet('134', 'Taramani Link Road', 12.9800, 80.2100, 156, totalStreets, 'medium', 'Residential', 'Velachery', 'Taramani Railway Station'),
+
+      addStreet('135', 'Thillai Ganga Nagar', 12.9780, 80.2080, 157, totalStreets, 'low', 'Residential', 'Velachery', 'Velachery GH'),
+
+       
+
+      // ZONE 22: THIRUVANMIYUR - East Coast Road
+
+      addStreet('136', 'ECR - Thiruvanmiyur', 13.0039, 80.2619, 158, totalStreets, 'medium', 'Main Road', 'East Coast Road', 'Thiruvanmiyur Bus Stand'),
+
+      addStreet('137', 'Taramani Road', 13.0080, 80.2580, 159, totalStreets, 'low', 'Main Road', 'East Coast Road', 'IIT Madras'),
+
+      addStreet('138', 'Kottivakkam High Road', 13.0050, 80.2650, 160, totalStreets, 'high', 'Main Road', 'East Coast Road', 'Kottivakkam Bus Stand'),
+
+      addStreet('139', 'Neelankarai Beach Road', 12.9500, 80.2550, 161, totalStreets, 'high', 'Beach Road', 'East Coast Road', 'Neelankarai Bus Stand'),
+
+      addStreet('140', 'Uthandi Kuppam Road', 12.9400, 80.2500, 162, totalStreets, 'medium', 'Residential', 'East Coast Road', 'Uthandi Bus Stop'),
+
+       
+
+      // ZONE 23: NUNGAMBAKKAM - Central Chennai
+
+      addStreet('141', 'Nungambakkam High Road', 13.0650, 80.2400, 163, totalStreets, 'medium', 'Main Road', 'Nungambakkam', 'Nungambakkam Railway Station'),
+
+      addStreet('142', 'Sterling Road', 13.0680, 80.2420, 164, totalStreets, 'low', 'Residential', 'Nungambakkam', 'Loyola College'),
+
+      addStreet('143', 'Haddows Road', 13.0700, 80.2450, 165, totalStreets, 'low', 'Residential', 'Nungambakkam', 'American Consulate'),
+
+      addStreet('144', 'College Road', 13.0670, 80.2380, 166, totalStreets, 'low', 'Educational', 'Nungambakkam', 'Ethiraj College'),
+
+      addStreet('145', 'Cenotaph Road', 13.0630, 80.2430, 167, totalStreets, 'medium', 'Commercial', 'Nungambakkam', 'Nungambakkam Police Station'),
+
+       
+
+      // ZONE 24: KILPAUK - North Chennai
+
+      addStreet('146', 'Poonamallee High Road (Kilpauk)', 13.0820, 80.2300, 168, totalStreets, 'high', 'Main Road', 'Kilpauk', 'Kilpauk Medical College'),
+
+      addStreet('147', 'New Avadi Road', 13.0850, 80.2320, 169, totalStreets, 'medium', 'Main Road', 'Kilpauk', 'Kilpauk Water Works'),
+
+      addStreet('148', 'McNichols Road', 13.0800, 80.2350, 170, totalStreets, 'low', 'Residential', 'Kilpauk', 'Kilpauk Garden'),
+
+      addStreet('149', 'Arcot Road', 13.0780, 80.2280, 171, totalStreets, 'medium', 'Commercial', 'Kilpauk', 'Kilpauk Railway Station'),
+
+      addStreet('150', 'Pulla Avenue', 13.0830, 80.2250, 172, totalStreets, 'low', 'Residential', 'Kilpauk', 'Kilpauk Bus Depot'),
+
+       
+
+      // ZONE 25: TIRUVOTTIYUR - North Chennai
+
+      addStreet('151', 'Tiruvottiyur High Road', 13.1580, 80.3000, 173, totalStreets, 'high', 'Main Road', 'Tiruvottiyur', 'Tiruvottiyur Railway Station'),
+
+      addStreet('152', 'T.H. Road', 13.1550, 80.2950, 174, totalStreets, 'high', 'Main Road', 'Tiruvottiyur', 'Tiruvottiyur Bus Stand'),
+
+      addStreet('153', 'Kanniamman Koil Street', 13.1600, 80.3050, 175, totalStreets, 'medium', 'Commercial', 'Tiruvottiyur', 'Tiruvottiyur GH'),
+
+      addStreet('154', 'Srinivasa Nagar', 13.1620, 80.2980, 176, totalStreets, 'low', 'Residential', 'Tiruvottiyur', 'Tiruvottiyur Police Station'),
+
+      addStreet('155', 'Kannigaipair', 13.1650, 80.2920, 177, totalStreets, 'medium', 'Residential', 'Tiruvottiyur', 'Kannigaipair Bus Stand'),
+
+       
+
+      // ZONE 26: EGMORE - Central Chennai
+
+      addStreet('156', 'Poonamallee High Road (Egmore)', 13.0800, 80.2600, 178, totalStreets, 'medium', 'Main Road', 'Egmore', 'Egmore Railway Station'),
+
+      addStreet('157', 'Kennedy Lane', 13.0720, 80.2600, 179, totalStreets, 'medium', 'Residential', 'Egmore', 'Egmore Museum'),
+
+      addStreet('158', 'Chetpet Bridge Road', 13.0700, 80.2550, 180, totalStreets, 'high', 'Main Road', 'Egmore', 'Chetpet Railway Station'),
+
+      addStreet('159', 'Wallace Garden', 13.0680, 80.2500, 181, totalStreets, 'low', 'Residential', 'Egmore', 'Wallace Garden Police Station'),
+
+      addStreet('160', 'Cenotaph Road (Egmore)', 13.0650, 80.2480, 182, totalStreets, 'medium', 'Commercial', 'Egmore', 'Egmore Government Hospital'),
+
+       
+
+      // ZONE 24: KILPAUK - North Chennai
+
+      addStreet('146', 'Poonamallee High Road (Kilpauk)', 13.0820, 80.2300, 183, totalStreets, 'high', 'Main Road', 'Kilpauk', 'Kilpauk Medical College'),
+
+      addStreet('147', 'New Avadi Road', 13.0850, 80.2320, 184, totalStreets, 'medium', 'Main Road', 'Kilpauk', 'Kilpauk Water Works'),
+
+      addStreet('148', 'McNichols Road', 13.0800, 80.2350, 185, totalStreets, 'low', 'Residential', 'Kilpauk', 'Kilpauk Garden'),
+
+      addStreet('149', 'Arcot Road', 13.0780, 80.2280, 186, totalStreets, 'medium', 'Commercial', 'Kilpauk', 'Kilpauk Railway Station'),
+
+      addStreet('150', 'Pulla Avenue', 13.0830, 80.2250, 187, totalStreets, 'low', 'Residential', 'Kilpauk', 'Kilpauk Bus Depot'),
+
+      // ZONE 27: PERAMBUR - North Chennai
+
+      addStreet('161', 'Perambur High Road', 13.1150, 80.2400, 188, totalStreets, 'high', 'Main Road', 'Perambur', 'Perambur Railway Station'),
+
+      addStreet('162', 'Pulianthope High Road', 13.1180, 80.2450, 189, totalStreets, 'medium', 'Main Road', 'Perambur', 'Perambur GH'),
+
+      addStreet('163', 'Ayanavaram Road', 13.1200, 80.2380, 190, totalStreets, 'low', 'Residential', 'Perambur', 'Ayanavaram Railway Station'),
+
+      addStreet('164', 'Otteri Nullah Road', 13.1170, 80.2420, 191, totalStreets, 'high', 'Residential', 'Perambur', 'Perambur Bus Depot'),
+
+      addStreet('165', 'Sembium Main Road', 13.1220, 80.2480, 192, totalStreets, 'medium', 'Commercial', 'Perambur', 'Sembium Bus Stand'),
+
+       
+
+      // ZONE 28: KODAMBAKKAM - Central Chennai
+
+      addStreet('166', 'Arcot Road (Kodambakkam)', 13.0520, 80.2250, 193, totalStreets, 'high', 'Main Road', 'Kodambakkam', 'Kodambakkam Railway Station'),
+
+      addStreet('167', 'Rangarajapuram Main Road', 13.0500, 80.2220, 194, totalStreets, 'medium', 'Residential', 'Kodambakkam', 'Vijaya Hospital'),
+
+      addStreet('168', 'Natesan Street', 13.0480, 80.2280, 195, totalStreets, 'low', 'Commercial', 'Kodambakkam', 'Kodambakkam Bus Stand'),
+
+      addStreet('169', 'Santhoshapuram', 13.0550, 80.2300, 196, totalStreets, 'medium', 'Residential', 'Kodambakkam', 'Vadapalani Metro'),
+
+      addStreet('170', 'Lakshmipuram', 13.0530, 80.2200, 197, totalStreets, 'low', 'Residential', 'Kodambakkam', 'Kodambakkam Police Station'),
+
+       
+
+      // ZONE 29: PORUR - West Chennai
+
+      addStreet('171', 'Mount Poonamallee Road', 13.0350, 80.1600, 198, totalStreets, 'medium', 'Main Road', 'Porur', 'Porur Junction'),
+
+      addStreet('172', 'Mugalivakkam Main Road', 13.0380, 80.1650, 199, totalStreets, 'low', 'Residential', 'Porur', 'Mugalivakkam Bus Stand'),
+
+      addStreet('173', 'Ramachandra Nagar', 13.0400, 80.1620, 200, totalStreets, 'medium', 'Residential', 'Porur', 'Porur GH'),
+
+      addStreet('174', 'Iyyappanthangal', 13.0320, 80.1580, 201, totalStreets, 'high', 'Residential', 'Porur', 'Iyyappanthangal Bus Depot'),
+
+      addStreet('175', 'Mangadu Main Road', 13.0300, 80.1550, 202, totalStreets, 'medium', 'Main Road', 'Porur', 'Mangadu Bus Stand'),
+
+       
+
+      // ZONE 30: TAMBARAM - South Chennai
+
+      addStreet('176', 'GST Road (Tambaram)', 12.9300, 80.1400, 203, totalStreets, 'high', 'Main Road', 'Tambaram', 'Tambaram Railway Station'),
+
+      addStreet('177', 'East Tambaram', 12.9280, 80.1450, 204, totalStreets, 'medium', 'Residential', 'Tambaram', 'Tambaram GH'),
+
+      addStreet('178', 'West Tambaram', 12.9250, 80.1380, 205, totalStreets, 'low', 'Commercial', 'Tambaram', 'Tambaram Bus Stand'),
+
+      addStreet('179', 'Chromepet GH Road', 12.9200, 80.1350, 206, totalStreets, 'medium', 'Main Road', 'Tambaram', 'Chromepet GH'),
+
+      addStreet('180', 'Pallavaram-Thoraipakkam Road', 12.9180, 80.1400, 207, totalStreets, 'high', 'Main Road', 'Tambaram', 'Pallavaram Railway Station')
+
+    ];
+
+
+
+    // Emergency contacts and shelter database for Chennai
+
+    const emergencyContacts = {
+
+      police: '100',
+
+      ambulance: '108',
+
+      fire: '101',
+
+      disasterManagement: '1070',
+
+      chennaiCorporation: '044-25619206',
+
+      floodControl: '044-28553900'
+
+    };
+
+
+
+    const shelterDatabase = [
+
+      { name: 'Government General Hospital', lat: 13.0800, lon: 80.2800, capacity: 500, contact: '044-25305000', type: 'Hospital' },
+
+      { name: 'T Nagar Community Center', lat: 13.0407, lon: 80.2344, capacity: 200, contact: '044-24342500', type: 'Community Center' },
+
+      { name: 'Velachery Railway Station', lat: 12.9819, lon: 80.2200, capacity: 300, contact: '044-22550000', type: 'Railway Station' },
+
+      { name: 'Tambaram Railway Station', lat: 12.9249, lon: 80.1094, capacity: 400, contact: '044-22250000', type: 'Railway Station' },
+
+      { name: 'Egmore Railway Station', lat: 13.0800, lon: 80.2600, capacity: 350, contact: '044-25350000', type: 'Railway Station' },
+
+      { name: 'Koyambedu Bus Terminus', lat: 13.0700, lon: 80.2000, capacity: 600, contact: '044-24750000', type: 'Bus Terminus' },
+
+      { name: 'Chennai Trade Center', lat: 13.0400, lon: 80.2400, capacity: 800, contact: '044-24340000', type: 'Exhibition Center' },
+
+      { name: 'Anna University', lat: 12.9900, lon: 80.2300, capacity: 1000, contact: '044-22350000', type: 'Educational Institution' },
+
+      { name: 'IIT Madras', lat: 12.9900, lon: 80.2300, capacity: 800, contact: '044-22570000', type: 'Educational Institution' },
+
+      { name: 'Marina Beach - Emergency Shelter', lat: 13.0500, lon: 80.2800, capacity: 2000, contact: '044-28550000', type: 'Beach Area' }
+
+    ];
+
+
+
+    // Global variables for map and user location
+
+    let map;
+
+    let userLocationMarker;
+
+    let floodMarkers = [];
+
+    let userLocation = { lat: 13.0827, lon: 80.2707, street: 'Central Chennai' };
+
+     
+
+    let updateInterval = null;
+
+    let isOfflineMode = false;
+
+    let cachedData = null;
+
+    const OFFLINE_MODE_ENABLED = 'Offline Mode Enabled';
+
+    const OFFLINE_MODE_DISABLED = 'Enable Offline Mode';
+
+
+
+    // Initialize the real Chennai map
+
+    function initializeMap() {
+
+      // Center on entire Chennai city area
+
+      map = L.map('map').setView([13.0827, 80.2707], 11);
+
+       
+
+      // Add OpenStreetMap tiles
+
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+
+        attribution: ' OpenStreetMap contributors',
+
+        maxZoom: 18
+
+      }).addTo(map);
+
+      // Chennai District Boundary using precise coordinates
+      const boundaries = {
+        east: { // Eastern boundary along the coast
+          coords: [
+            [13.1500, 80.3069], // North-east corner (Ennore)
+            [13.1400, 80.3060],
+            [13.1300, 80.3050],
+            [13.1200, 80.3040],
+            [13.1100, 80.3030],
+            [13.1000, 80.3020], // Near Chennai Port
+            [13.0900, 80.3010],
+            [13.0800, 80.3000],
+            [13.0700, 80.2990],
+            [13.0600, 80.2980], // Near Marina Beach
+            [13.0500, 80.2970],
+            [13.0400, 80.2960],
+            [13.0300, 80.2950],
+            [13.0200, 80.2940],
+            [13.0100, 80.2930],
+            [13.0000, 80.2920],
+            [12.9900, 80.2910],
+            [12.9800, 80.2900],
+            [12.9700, 80.2890],
+            [12.9662, 80.2880]  // South-east corner
+          ],
+          label: 'Bay of Bengal (Coastal Boundary)'
+        },
+        north: { // Northern boundary
+          coords: [
+            [13.1500, 80.1840], // North-west corner
+            [13.1500, 80.2000],
+            [13.1500, 80.2200],
+            [13.1500, 80.2400],
+            [13.1500, 80.2600],
+            [13.1500, 80.2800],
+            [13.1500, 80.3000],
+            [13.1500, 80.3069]  // North-east corner
+          ],
+          label: 'Tiruvallur District Border'
+        },
+        west: { // Western boundary
+          coords: [
+            [13.1500, 80.1840], // North-west corner
+            [13.1300, 80.1840],
+            [13.1100, 80.1840],
+            [13.0900, 80.1840],
+            [13.0700, 80.1840],
+            [13.0500, 80.1840],
+            [13.0300, 80.1840],
+            [13.0100, 80.1840],
+            [12.9900, 80.1840],
+            [12.9700, 80.1840],
+            [12.9662, 80.1840]  // South-west corner
+          ],
+          label: 'Kanchipuram District Border'
+        },
+        south: { // Southern boundary
+          coords: [
+            [12.9662, 80.1840], // South-west corner
+            [12.9662, 80.2000],
+            [12.9662, 80.2200],
+            [12.9662, 80.2400],
+            [12.9662, 80.2600],
+            [12.9662, 80.2800],
+            [12.9662, 80.2880]  // South-east corner
+          ],
+          label: 'Chengalpattu District Border'
+        }
+      };
+
+      // Add labels at the midpoint of each boundary
+      Object.values(boundaries).forEach(boundary => {
+        const midPoint = boundary.coords[Math.floor(boundary.coords.length / 2)];
+        L.marker(midPoint, {
+          icon: L.divIcon({
+            className: 'boundary-label',
+            html: boundary.label,
+            iconSize: [200, 20]
+          })
+        }).addTo(map);
+      });
+
+      // Add CSS for boundary labels
+      const style = document.createElement('style');
+      style.textContent = `
+        .boundary-label {
+          background: transparent !important;
+          border: none !important;
+          color: red;
+          font-size: 12px;
+          font-weight: bold;
+          text-shadow: -1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff, 1px 1px 0 #fff;
+          white-space: nowrap;
+          transform: translate(-50%, -50%);
+        }
+      `;
+      document.head.appendChild(style);
+
+       
+
+      // Add click handler for setting user location
+
+      map.on('click', function(e) {
+
+        setUserLocationFromMap(e.latlng);
+
+      });
+
+       
+
+      // Initialize user location marker
+
+      userLocationMarker = L.marker([userLocation.lat, userLocation.lon], {
+
+        icon: L.divIcon({
+
+          className: 'user-location-marker',
+
+          html: '<div style="background-color: #8b5cf6; width: 20px; height: 20px; border-radius: 50%; border: 3px solid white; box-shadow: 0 0 10px rgba(0,0,0,0.3);"></div>',
+
+          iconSize: [20, 20],
+
+          iconAnchor: [10, 10]
+
+        })
+
+      }).addTo(map);
+
+       
+
+      // Add popup to user marker
+
+      userLocationMarker.bindPopup('Your Location<br>' + userLocation.street).openPopup();
+
+    }
+
+
+
+    // Function to set user location based on map click
+
+    function setUserLocationFromMap(latlng) {
+
+      userLocation.lat = latlng.lat;
+
+      userLocation.lon = latlng.lng;
+
+      userLocation.street = 'Your Marked Location';
+
+
+
+      // Update user marker position
+
+      userLocationMarker.setLatLng([latlng.lat, latlng.lng]);
+
+      userLocationMarker.bindPopup('Your Location<br>' + userLocation.street).openPopup();
+
+
+
+      showMessage('Your home location has been marked! Click "Check My Flood Status" to get an update.');
+
+    }
+
+
+
+    // AI-powered flood prediction algorithm
+
+    function predictFloodRisk(zone, currentTime) {
+
+      const baseRisk = zone.riskLevel === 'high' ? 0.7 : zone.riskLevel === 'medium' ? 0.4 : 0.1;
+
+      const timeFactor = Math.sin(currentTime / (1000 * 60 * 60 * 12)) * 0.3; // Simulate daily patterns
+
+      const randomFactor = Math.random() * 0.2;
+
+       
+
+      return Math.min(1, Math.max(0, baseRisk + timeFactor + randomFactor));
+
+    }
+
+
+
+    // Additional flood data points with varying severity levels
+    const additionalFloodData = [
+      // High risk areas
+      { id: 'add1', streetName: 'Anna Nagar West', lat: 13.0907, lon: 80.2126, riskLevel: 'high', streetType: 'Residential', zone: 'North', shelterNearby: 'Anna Nagar Tower Park' },
+      { id: 'add2', streetName: 'T. Nagar', lat: 13.0479, lon: 80.2428, riskLevel: 'high', streetType: 'Commercial', zone: 'Central', shelterNearby: 'Theagaraya Nagar' },
+      { id: 'add11', streetName: 'Egmore', lat: 13.0790, lon: 80.2610, riskLevel: 'high', streetType: 'Mixed', zone: 'Central', shelterNearby: 'Egmore Railway Station' },
+      
+      // Medium risk areas
+      { id: 'add3', streetName: 'Velachery', lat: 12.9848, lon: 80.2215, riskLevel: 'medium', streetType: 'Residential', zone: 'South', shelterNearby: 'Velachery Community Hall' },
+      { id: 'add4', streetName: 'Mylapore', lat: 13.0375, lon: 80.2714, riskLevel: 'medium', streetType: 'Residential', zone: 'South', shelterNearby: 'Mylapore Tank' },
+      { id: 'add5', streetName: 'Kodambakkam', lat: 13.0518, lon: 80.2293, riskLevel: 'medium', streetType: 'Mixed', zone: 'Central', shelterNearby: 'Valluvar Kottam' },
+      { id: 'add12', streetName: 'Pudupet', lat: 13.0645, lon: 80.2678, riskLevel: 'medium', streetType: 'Commercial', zone: 'Central', shelterNearby: 'LIC Building' },
+      { id: 'add13', streetName: 'Chintadripet', lat: 13.0730, lon: 80.2685, riskLevel: 'medium', streetType: 'Residential', zone: 'Central', shelterNearby: 'Chepauk Stadium' },
+      
+      // Low risk areas
+      { id: 'add6', streetName: 'Kilpauk', lat: 13.0806, lon: 80.2402, riskLevel: 'low', streetType: 'Residential', zone: 'Central', shelterNearby: 'Kilpauk Medical College' },
+      { id: 'add7', streetName: 'Nungambakkam', lat: 13.0604, lon: 80.2423, riskLevel: 'low', streetType: 'Commercial', zone: 'Central', shelterNearby: 'Loyola College' },
+      { id: 'add8', streetName: 'Saidapet', lat: 13.0216, lon: 80.2285, riskLevel: 'low', streetType: 'Residential', zone: 'South', shelterNearby: 'Gandhi Mandapam' },
+      { id: 'add9', streetName: 'Purasaiwakkam', lat: 13.0839, lon: 80.2550, riskLevel: 'low', streetType: 'Mixed', zone: 'Central', shelterNearby: 'Purasaiwakkam Railway Station' },
+      { id: 'add10', streetName: 'Mambalam', lat: 13.0359, lon: 80.2307, riskLevel: 'low', streetType: 'Commercial', zone: 'Central', shelterNearby: 'T. Nagar Bus Terminus' },
+      { id: 'add14', streetName: 'Teynampet', lat: 13.0430, lon: 80.2540, riskLevel: 'low', streetType: 'Commercial', zone: 'Central', shelterNearby: 'Nandanam Bus Stand' },
+      { id: 'add15', streetName: 'Royapettah', lat: 13.0540, lon: 80.2620, riskLevel: 'low', streetType: 'Mixed', zone: 'Central', shelterNearby: 'Government Hospital' },
+      { id: 'add16', streetName: 'Triplicane', lat: 13.0630, lon: 80.2750, riskLevel: 'low', streetType: 'Residential', zone: 'Central', shelterNearby: 'Parthasarathy Temple' },
+      { id: 'add17', streetName: 'Chetpet', lat: 13.0700, lon: 80.2400, riskLevel: 'low', streetType: 'Residential', zone: 'Central', shelterNearby: 'Chetpet Lake Park' },
+      { id: 'add18', streetName: 'Alwarpet', lat: 13.0340, lon: 80.2550, riskLevel: 'low', streetType: 'Residential', zone: 'Central', shelterNearby: 'Bharatiya Vidya Bhavan' },
+      { id: 'add19', streetName: 'T. Nagar West', lat: 13.0400, lon: 80.2350, riskLevel: 'medium', streetType: 'Commercial', zone: 'Central', shelterNearby: 'Panagal Park' },
+      { id: 'add20', streetName: 'Nandanam', lat: 13.0360, lon: 80.2420, riskLevel: 'medium', streetType: 'Mixed', zone: 'Central', shelterNearby: 'Nandanam Arts College' }
+    ];
+
+    // Function to update flood data with dynamic water levels
+    function updateFloodData() {
+      const now = new Date();
+      const timeFactor = Math.sin(now.getHours() / 24 * Math.PI * 2) * 0.5 + 0.5; // Varies between 0 and 1 throughout the day
+      
+      // Update existing flood data
+      floodData = floodData.map(zone => {
+        const baseLevel = zone.baseWaterLevel || 0;
+        const variation = (Math.random() * 20) - 10; // Random variation between -10 and 10
+        zone.waterLevel_cm = Math.max(0, baseLevel + (variation * timeFactor));
+        zone.lastUpdated = now;
+        
+        // Update severity based on water level
+        if (zone.waterLevel_cm < 10) {
+          zone.severity = 'none';
+        } else if (zone.waterLevel_cm < 50) {
+          zone.severity = 'low';
+        } else if (zone.waterLevel_cm < 150) {
+          zone.severity = 'medium';
+        } else {
+          zone.severity = 'high';
+        }
+        
+        return zone;
+      });
+      
+      // Re-render flood zones with updated data
+      renderFloodZones();
+    }
+
+    // Function to render flood zones on the real map
+    function renderFloodZones() {
+      // Clear previous flood markers
+      floodMarkers.forEach(marker => map.removeLayer(marker));
+      floodMarkers = [];
+
+      // Combine original and additional flood data
+      const allFloodData = [...floodData, ...additionalFloodData];
+
+      allFloodData.forEach(zone => {
+
+        // AI prediction for flood risk
+
+        const floodRisk = predictFloodRisk(zone, Date.now());
+
+         
+
+        // Update water level based on prediction
+
+        if (floodRisk > 0.6) {
+
+          zone.waterLevel_cm = Math.min(300, zone.waterLevel_cm + Math.random() * 20);
+
+          zone.predictedArrival = new Date(Date.now() + Math.random() * 30 * 60 * 1000);
+
+        } else if (floodRisk < 0.3) {
+
+          zone.waterLevel_cm = Math.max(0, zone.waterLevel_cm - Math.random() * 10);
+
+        }
+
+     
+
+        // Always set severity based on current water level
+
+        if (zone.waterLevel_cm < 10) {
+
+          zone.severity = 'none';
+
+        } else if (zone.waterLevel_cm < 50) {
+
+          zone.severity = 'low';
+
+        } else if (zone.waterLevel_cm < 150) {
+
+          zone.severity = 'medium';
+
+        } else {
+
+          zone.severity = 'high';
+
+        }
+
+         
+
+        zone.lastUpdated = new Date();
+
+         
+
+        // Create marker based on severity
+
+        let markerColor = '#10b981'; // green for none
+
+        let markerSize = 12; // Same size for all severity levels
+
+         
+
+        if (zone.severity === 'low') {
+
+          markerColor = '#3b82f6'; // blue
+
+        } else if (zone.severity === 'medium') {
+
+          markerColor = '#f59e0b'; // amber
+
+        } else if (zone.severity === 'high') {
+
+          markerColor = '#ef4444'; // red
+
+        }
+
+         
+
+        // Create custom icon
+
+        const customIcon = L.divIcon({
+
+          className: 'flood-marker',
+
+          html: `<div style="
+
+            background-color: ${markerColor};
+
+            width: ${markerSize}px;
+
+            height: ${markerSize}px;
+
+            border-radius: 50%;
+
+            border: 2px solid white;
+
+            box-shadow: 0 0 10px rgba(0,0,0,0.3);
+
+            animation: pulse 2s infinite;
+
+          "></div>`,
+
+          iconSize: [markerSize, markerSize],
+
+          iconAnchor: [markerSize/2, markerSize/2]
+
+        });
+
+         
+
+        // Create marker
+
+        const marker = L.marker([zone.lat, zone.lon], { icon: customIcon });
+
+         
+
+        // Add popup with detailed information
+
+        const timeStr = zone.lastUpdated.toLocaleTimeString();
+
+        const riskPercent = Math.round(floodRisk * 100);
+
+        const popupContent = `
+
+          <div style="min-width: 200px;">
+
+            <h3 style="margin: 0 0 10px 0; color: #1f2937; font-weight: bold;">${zone.streetName}</h3>
+
+            <div style="margin-bottom: 8px;">
+
+              <strong>Water Level:</strong> ${zone.waterLevel_cm}cm
+
+            </div>
+
+            <div style="margin-bottom: 8px;">
+
+              <strong>Severity:</strong> <span style="color: ${markerColor}; font-weight: bold;">${zone.severity.toUpperCase()}</span>
+
+            </div>
+
+            <div style="margin-bottom: 8px;">
+
+              <strong>Flood Risk:</strong> ${riskPercent}%
+
+            </div>
+
+            <div style="margin-bottom: 8px;">
+
+              <strong>Street Type:</strong> ${zone.streetType}
+
+            </div>
+
+            <div style="margin-bottom: 8px;">
+
+              <strong>Updated:</strong> ${timeStr}
+
+            </div>
+
+            ${zone.predictedArrival ? `<div style="margin-bottom: 8px;"><strong>Predicted Arrival:</strong> ${zone.predictedArrival.toLocaleTimeString()}</div>` : ''}
+
+            <div style="margin-bottom: 8px;">
+
+              <strong>Nearest Shelter:</strong> ${zone.shelterNearby}
+
+            </div>
+
+            <button onclick="showZoneDetails(${zone.id})" style="
+
+              background-color: #3b82f6;
+
+              color: white;
+
+              border: none;
+
+              padding: 5px 10px;
+
+              border-radius: 4px;
+
+              cursor: pointer;
+
+              font-size: 12px;
+
+            ">View Details</button>
+
+          </div>
+
+        `;
+
+         
+
+        marker.bindPopup(popupContent);
+
+         
+
+        // Add click handler for detailed view
+
+        marker.on('click', () => showZoneDetails(zone));
+
+         
+
+        // Add to map and store reference
+
+        marker.addTo(map);
+
+        floodMarkers.push(marker);
+
+      });
+
+    }
+
+
+
+    // Function to show detailed zone information
+
+    function showZoneDetails(zoneId) {
+
+      const zone = floodData.find(z => z.id == zoneId);
+
+      if (!zone) return;
+
+       
+
+      const riskPercent = Math.round(predictFloodRisk(zone, Date.now()) * 100);
+
+      const nearestShelters = findNearestShelters(zone.lat, zone.lon, 3);
+
+       
+
+      let message = `📍 ${zone.streetName}\n\n`;
+
+      message += `🌊 Water Level: ${zone.waterLevel_cm}cm\n`;
+
+      message += `⚠️ Flood Risk: ${riskPercent}%\n`;
+
+      message += `🛣️ Street Type: ${zone.streetType}\n`;
+
+      message += `🕐 Last Updated: ${zone.lastUpdated.toLocaleTimeString()}\n`;
+
+      message += `🏠 Nearest Shelter: ${zone.shelterNearby}\n\n`;
+
+       
+
+      if (nearestShelters.length > 0) {
+
+        message += `🏢 Nearby Shelters:\n`;
+
+        nearestShelters.forEach(shelter => {
+
+          const distance = getDistance(zone.lat, zone.lon, shelter.lat, shelter.lon);
+
+          message += `• ${shelter.name} (${distance.toFixed(1)}km) - ${shelter.contact}\n`;
+
+        });
+
+      }
+
+       
+
+      showMessage(message);
+
+    }
+
+
+
+    // Function to find nearest shelters
+
+    function findNearestShelters(lat, lon, count = 3) {
+
+      return shelterDatabase
+
+        .map(shelter => ({
+
+          ...shelter,
+
+          distance: getDistance(lat, lon, shelter.lat, shelter.lon)
+
+        }))
+
+        .sort((a, b) => a.distance - b.distance)
+
+        .slice(0, count);
+
+    }
+
+     
+
+    // Helper function to calculate distance between two lat/lon points
+
+    function getDistance(lat1, lon1, lat2, lon2) {
+
+      const R = 6371; // Radius of Earth in kilometers
+
+      const dLat = (lat2 - lat1) * Math.PI / 180;
+
+      const dLon = (lon2 - lon1) * Math.PI / 180;
+
+      const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+
+           Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+
+           Math.sin(dLon/2) * Math.sin(dLon/2);
+
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+
+      return R * c; 
+
+    }
+
+
+
+    // Main function to check flood status and provide personalized alerts
+
+    function checkFloodStatus() {
+
+      document.getElementById('statusContainer').classList.remove('hidden');
+
+      const alertMessage = document.getElementById('alertMessage');
+
+      const userInfo = document.getElementById('userInfo');
+
+      const safeRouteInfo = document.getElementById('safeRouteInfo');
+
+      const additionalInfo = document.getElementById('additionalInfo');
+
+
+
+      userInfo.innerHTML = `<p class="font-bold">Your current location:</p> <p>${userLocation.street}</p>`;
+
+       
+
+      let nearestFlood = null;
+
+      let minDistance = Infinity;
+
+
+
+      // Find the nearest and most severe flood zone
+
+      floodData.forEach(zone => {
+
+        const distance = getDistance(userLocation.lat, userLocation.lon, zone.lat, userLocation.lon);
+
+        if (distance < minDistance && zone.severity !== 'none') {
+
+          minDistance = distance;
+
+          nearestFlood = zone;
+
+        }
+
+      });
+
+
+
+      if (nearestFlood && minDistance < 5) { // Check if a significant flood is nearby
+
+        const timeToArrival = Math.round((nearestFlood.predictedArrival - Date.now()) / (1000 * 60));
+
+         
+
+        // Personalized Alert based on proximity and prediction
+
+        let message = `Alert: Flooding detected near your location on ${nearestFlood.streetName}. Water Level: ${nearestFlood.waterLevel_cm}cm.`;
+
+        let messageClass = 'status-message info';
+
+         
+
+        if (nearestFlood.severity === 'low') {
+
+          messageClass = 'status-message info';
+
+          message = `Early Warning: Minor waterlogging detected on ${nearestFlood.streetName}, about ${minDistance.toFixed(2)} km away. Water Level: ${nearestFlood.waterLevel_cm}cm.`;
+
+        } else if (nearestFlood.severity === 'medium') {
+
+          messageClass = 'status-message warning';
+
+          message = `Caution: Moderate flooding on ${nearestFlood.streetName}, about ${minDistance.toFixed(2)} km away. Water Level: ${nearestFlood.waterLevel_cm}cm.`;
+
+        } else if (nearestFlood.severity === 'high') {
+
+          messageClass = 'status-message danger';
+
+          message = `Critical: Severe flooding on ${nearestFlood.streetName}, about ${minDistance.toFixed(2)} km away. Water Level: ${nearestFlood.waterLevel_cm}cm.`;
+
+        }
+
+         
+
+        // AI-powered forecasting
+
+        if (timeToArrival > 0) {
+
+          message += ` Your street might flood in ${timeToArrival} mins – move to higher ground.`;
+
+        } else if (timeToArrival <= 0 && nearestFlood.severity !== 'none') {
+
+          message = `Critical: Severe flooding on ${nearestFlood.streetName}. Your street is likely flooded. Stay put.`;
+
+          safeRouteInfo.innerHTML = '';
+
+          // Generate nearby shelters information
+const nearbyShelters = [
+  { 
+    name: 'Sriperumbudur Bus Stand', 
+    type: 'bus',
+    distance: '0.2 km',
+    capacity: 'Medium',
+    contact: '044-27123456',
+    status: 'Available',
+    icon: '🚌'
+  },
+  { 
+    name: 'Government Higher Secondary School', 
+    type: 'school',
+    distance: '0.5 km',
+    capacity: 'Large',
+    contact: '044-27123457',
+    status: 'Available',
+    icon: '🏫'
+  },
+  { 
+    name: 'Community Hall', 
+    type: 'community',
+    distance: '0.8 km',
+    capacity: 'Medium',
+    contact: '044-27123458',
+    status: 'Available',
+    icon: '🏢'
+  },
+  { 
+    name: 'Sri Venkateswara Kalyana Mandapam', 
+    type: 'marriage',
+    distance: '1.2 km',
+    capacity: 'Large',
+    contact: '044-27123459',
+    status: 'Available',
+    icon: '💒'
+  },
+  { 
+    name: 'Sports Complex', 
+    type: 'sports',
+    distance: '1.5 km',
+    capacity: 'Large',
+    contact: '044-27123460',
+    status: 'Available',
+    icon: '⚽'
+  }
+];
+
+// Generate shelter cards HTML
+const sheltersHTML = `
+  <div class="mt-4 bg-white/90 backdrop-blur-sm p-4 rounded-lg border border-blue-100 shadow-sm">
+    <div class="flex items-center text-blue-800 mb-3">
+      <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+        <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"></path>
+      </svg>
+      <h4 class="font-semibold text-lg">Nearby Shelters</h4>
+      <span class="ml-auto text-sm bg-blue-100 text-blue-800 px-2.5 py-0.5 rounded-full">${nearbyShelters.length} options</span>
+    </div>
+    <div class="space-y-3 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
+      ${nearbyShelters.map(shelter => `
+        <div class="flex items-start p-3 bg-white border border-gray-100 rounded-lg hover:shadow-sm transition-shadow">
+          <div class="flex-shrink-0 mt-0.5">
+            <div class="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-xl">
+              ${shelter.icon}
+            </div>
+          </div>
+          <div class="ml-3 flex-1 min-w-0">
+            <div class="flex items-center justify-between">
+              <h5 class="font-semibold text-gray-900 truncate">${shelter.name}</h5>
+              <span class="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded-full">${shelter.status}</span>
+            </div>
+            <div class="mt-1 grid grid-cols-2 gap-2 text-sm">
+              <div class="flex items-center text-gray-600">
+                <svg class="w-3.5 h-3.5 mr-1 text-gray-400" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                  <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"></path>
+                </svg>
+                ${shelter.distance} away
+              </div>
+              <div class="flex items-center text-gray-600">
+                <svg class="w-3.5 h-3.5 mr-1 text-gray-400" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"></path>
+                </svg>
+                ${shelter.capacity} capacity
+              </div>
+              <div class="flex items-center text-gray-600">
+                <svg class="w-3.5 h-3.5 mr-1 text-gray-400" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z"></path>
+                </svg>
+                ${shelter.contact}
+              </div>
+              <div class="flex items-center text-gray-600">
+                <svg class="w-3.5 h-3.5 mr-1 text-gray-400" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                  <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h2a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
+                </svg>
+                ${shelter.type.charAt(0).toUpperCase() + shelter.type.slice(1)}
+              </div>
+            </div>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  </div>
+`;
+
+additionalInfo.innerHTML = sheltersHTML;
+
+        }
+
+
+
+        alertMessage.textContent = message;
+
+        alertMessage.className = `${messageClass} mb-4`;
+
+
+
+        // Smart Route Navigation
+
+        const floodedStreets = floodData.filter(d => d.severity !== 'none' && d.id !== nearestFlood.id);
+
+        if (floodedStreets.length > 0) {
+
+          const roadsToAvoid = floodedStreets.map(s => {
+            const waterLevel = parseFloat(s.waterLevel_cm);
+            let severityClass = 'bg-yellow-50 text-yellow-800 border-yellow-200';
+            let riskBadge = '';
+            
+            if (waterLevel > 150) {
+              severityClass = 'bg-red-50 text-red-800 border-red-200';
+              riskBadge = '<span class="ml-2 text-xs bg-gradient-to-r from-red-600 to-red-700 text-white px-2.5 py-1 rounded-full font-semibold shadow-sm">EXTREME FLOODING</span>';
+            } else if (waterLevel > 100) {
+              severityClass = 'bg-orange-50 text-orange-800 border-orange-200';
+              riskBadge = '<span class="ml-2 text-xs bg-orange-100 text-orange-800 px-2.5 py-1 rounded-full font-semibold">HIGH RISK</span>';
+            } else if (waterLevel > 80) {
+              riskBadge = '<span class="ml-2 text-xs bg-yellow-100 text-yellow-800 px-2.5 py-1 rounded-full">MODERATE</span>';
+            } else {
+              riskBadge = '<span class="ml-2 text-xs bg-blue-100 text-blue-800 px-2.5 py-1 rounded-full">LOW RISK</span>';
+            }
+            
+            return `
+              <div class="flex items-start p-3 border ${severityClass} rounded-lg transition-all duration-200 hover:shadow-sm">
+                <div class="flex-shrink-0 mt-0.5">
+                  <div class="w-8 h-8 rounded-full bg-white flex items-center justify-center shadow-inner border ${waterLevel > 100 ? 'border-red-200' : 'border-blue-200'}">
+                    <svg class="w-4 h-4 ${waterLevel > 100 ? 'text-red-500' : 'text-blue-500'}" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                      <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"></path>
+                    </svg>
+                  </div>
+                </div>
+                <div class="ml-3 flex-1 min-w-0">
+                  <div class="flex items-center justify-between">
+                    <span class="font-semibold text-gray-900">${s.streetName}</span>
+                    ${riskBadge}
+                  </div>
+                  <div class="mt-1 flex items-center text-sm">
+                    <span class="font-medium ${waterLevel > 150 ? 'text-red-700' : waterLevel > 80 ? 'text-orange-600' : 'text-yellow-700'}">
+                      ${waterLevel.toFixed(1)}cm water level
+                    </span>
+                    <span class="mx-2 text-gray-300">•</span>
+                    <span class="text-gray-500">Updated: ${new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                  </div>
+                </div>
+              </div>`;
+          }).join('');
+
+          safeRouteInfo.innerHTML = `
+            <div class="bg-gradient-to-br from-blue-50 to-blue-100 p-5 rounded-xl border-2 border-blue-200 shadow-lg transform transition-all duration-300 hover:scale-[1.01] hover:shadow-xl">
+              <div class="flex items-center text-blue-900 mb-3">
+                <div class="bg-blue-100 p-2 rounded-full mr-3">
+                  <svg class="w-6 h-6 text-blue-700" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
+                  </svg>
+                </div>
+                <h3 class="font-bold text-xl bg-gradient-to-r from-blue-700 to-blue-900 bg-clip-text text-transparent">FLOOD ALERT: ROUTE ADVISORY</h3>
+              </div>
+              
+              <div class="bg-white/80 backdrop-blur-sm p-4 rounded-lg border border-blue-100 mb-3">
+                <p class="text-gray-800 font-medium mb-3">🚧 The following roads have been affected by flooding. Consider alternative routes:</p>
+                <div class="space-y-2.5 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
+                  ${roadsToAvoid}
+                </div>
+              </div>
+              
+              <div class="flex justify-between items-center text-sm">
+                <div class="flex items-center text-blue-700">
+                  <svg class="w-4 h-4 mr-1.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"></path>
+                  </svg>
+                  <span class="font-medium">Last updated: ${new Date().toLocaleTimeString()}</span>
+                </div>
+                <span class="text-blue-600 text-xs font-medium bg-blue-50 px-2.5 py-1 rounded-full">REFRESH FOR UPDATES</span>
+              </div>
+              
+              <style>
+                .custom-scrollbar::-webkit-scrollbar {
+                  width: 6px;
+                  height: 6px;
+                }
+                .custom-scrollbar::-webkit-scrollbar-track {
+                  background: #f1f5f9;
+                  border-radius: 10px;
+                }
+                .custom-scrollbar::-webkit-scrollbar-thumb {
+                  background: #bfdbfe;
+                  border-radius: 10px;
+                }
+                .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+                  background: #93c5fd;
+                }
+              </style>
+            </div>`;
+
+        } else {
+
+          safeRouteInfo.innerHTML = `<p class="font-bold mt-2">Safe Route Navigation:</p> <p>No major flooded roads detected nearby. Travel safely.</p>`;
+
+        }
+
+      } else {
+
+         // No immediate threat
+
+        alertMessage.textContent = 'Status: All clear. No flooding detected near your location.';
+
+        alertMessage.className = 'status-message success mb-4';
+
+        safeRouteInfo.textContent = '';
+
+        additionalInfo.textContent = '';
+
+      }
+
+    }
+
+
+
+    // Route planner logic with realistic flood analysis
+    function checkRoute() {
+        const from = document.getElementById('fromInput').value.trim();
+        const to = document.getElementById('toInput').value.trim();
+        const routeStatus = document.getElementById('routeStatus');
+
+        if (!from || !to) {
+            showMessage("Please enter both a starting point and a destination.");
+            return;
+        }
+
+        // List of valid locations (case-insensitive)
+        const validLocations = [
+            'anna nagar', 't nagar', 'adyar', 'velachery', 'chromepet', 'tambaram',
+            'guindy', 'egmore', 'mylapore', 'royapettah', 'thiruvanmiyur', 'besant nagar',
+            'nungambakkam', 'koyambedu', 'ashok nagar', 'vadapalani', 'porur', 'sembakkam',
+            'medavakkam', 'sholinganallur', 'perungudi', 'thiruvanmiyur', 'thirumangalam',
+            'anna salai', 'mount road', 'gst road', 'ecr', 'east coast road', 'omr', 'old mahabalipuram road',
+            'poonamallee high road', 'velachery main road', '100 feet road', 'luz church road',
+            'santhome', 'mylapore tank', 'mandaveli', 't.nagar pondy bazaar', 'pondy bazaar',
+            'nandanam', 'saidapet', 'kotturpuram', 'indra nagar', 'alwarpet', 't. nagar', 't. nagar'
+        ];
+
+        // Check if locations are valid (only exact matches or very minor typos)
+        const isCloseMatch = (input, location) => {
+            // Remove extra spaces and normalize input
+            const cleanInput = input.toLowerCase().trim().replace(/\s+/g, ' ');
+            const cleanLocation = location.toLowerCase().trim().replace(/\s+/g, ' ');
+            
+            // Check for exact match (case insensitive)
+            if (cleanInput === cleanLocation) return true;
+            
+            // For multi-word locations, check if input matches the start of any word
+            const locationWords = cleanLocation.split(' ');
+            for (const word of locationWords) {
+                // Only match if input is at least 3 characters and matches the start of a word
+                if (cleanInput.length >= 3 && word.startsWith(cleanInput)) {
+                    return true;
+                }
+            }
+            
+            // Check for Levenshtein distance for minor typos (max 1 character difference)
+            if (Math.abs(cleanInput.length - cleanLocation.length) <= 1) {
+                let diff = 0;
+                const minLen = Math.min(cleanInput.length, cleanLocation.length);
+                for (let i = 0; i < minLen; i++) {
+                    if (cleanInput[i] !== cleanLocation[i]) diff++;
+                    if (diff > 1) return false;
+                }
+                return true;
+            }
+            
+            return false;
+        };
+        
+        const fromValid = validLocations.some(loc => isCloseMatch(from, loc));
+        const toValid = validLocations.some(loc => isCloseMatch(to, loc));
+        
+        // Get the closest matching location names for suggestions
+        const getClosestMatch = (input) => {
+            if (!input || input.length < 2) return [];
+            
+            const inputLower = input.toLowerCase();
+            return validLocations
+                .filter(loc => {
+                    const locLower = loc.toLowerCase();
+                    return locLower.includes(inputLower) || 
+                           inputLower.includes(locLower) ||
+                           locLower.split(' ').some(word => word.startsWith(inputLower)) ||
+                           inputLower.split(' ').some(word => locLower.includes(word));
+                })
+                .slice(0, 5); // Return top 5 matches
+        };
+        
+        const fromSuggestions = !fromValid ? getClosestMatch(from) : [];
+        const toSuggestions = !toValid ? getClosestMatch(to) : [];
+
+        if (!fromValid || !toValid) {
+            const invalidLocations = [];
+            if (!fromValid) invalidLocations.push('Starting point');
+            if (!toValid) invalidLocations.push('Destination');
+            
+            let suggestionsHtml = '';
+            if (fromSuggestions.length > 0 || toSuggestions.length > 0) {
+                suggestionsHtml = `
+                    <div class="mt-3 space-y-2">
+                        ${!fromValid && fromSuggestions.length > 0 ? `
+                        <div>
+                            <p class="text-xs font-medium">Did you mean for starting point?</p>
+                            <div class="flex flex-wrap gap-2 mt-1">
+                                ${fromSuggestions.map(loc => 
+                                    `<button onclick="document.getElementById('fromInput').value='${loc}';checkRoute();" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 cursor-pointer">
+                                        ${loc}
+                                    </button>`
+                                ).join('')}
+                            </div>
+                        </div>` : ''}
+                        
+                        ${!toValid && toSuggestions.length > 0 ? `
+                        <div>
+                            <p class="text-xs font-medium">Did you mean for destination?</p>
+                            <div class="flex flex-wrap gap-2 mt-1">
+                                ${toSuggestions.map(loc => 
+                                    `<button onclick="document.getElementById('toInput').value='${loc}';checkRoute();" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-50 text-green-700 border border-green-200 hover:bg-green-100 cursor-pointer">
+                                        ${loc}
+                                    </button>`
+                                ).join('')}
+                            </div>
+                        </div>` : ''}
+                    </div>`;
+            }
+            
+            routeStatus.innerHTML = `
+                <div class="bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded-r-lg">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <svg class="h-5 w-5 text-yellow-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h2a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+                            </svg>
+                        </div>
+                        <div class="ml-3">
+                            <h3 class="text-sm font-medium text-yellow-800">Location Not Recognized</h3>
+                            <div class="mt-1 text-sm text-yellow-700">
+                                <p>We couldn't find ${invalidLocations.join(' or ')} in our database.</p>
+                                <p class="mt-1">Please check the spelling or try a different location.</p>
+                                ${suggestionsHtml}
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+            return;
+        }
+
+        // Get all active flood zones (severity not 'none')
+        const activeFloodZones = floodData.filter(zone => zone.severity !== 'none');
+        
+        // Simulated route segments with realistic Chennai road network coordinates
+        // In a real app, this would come from a routing service
+        const routeSegments = [
+            { name: 'Anna Salai', lat: 13.0604, lon: 80.2496 },
+            { name: 'Mount Road', lat: 13.0629, lon: 80.2535 },
+            { name: 'Rajaji Salai', lat: 13.0827, lon: 80.2707 },
+            { name: 'Poonamallee High Road', lat: 13.0867, lon: 80.2676 },
+            { name: 'GST Road', lat: 12.9941, lon: 80.1709 }
+        ];
+
+        // Check each segment against active flood zones
+        const affectedSegments = [];
+        routeSegments.forEach(segment => {
+            activeFloodZones.forEach(floodZone => {
+                const distance = getDistance(
+                    segment.lat, 
+                    segment.lon, 
+                    parseFloat(floodZone.lat), 
+                    parseFloat(floodZone.lon)
+                );
+                
+                // If flood zone is within 1km of route segment
+                if (distance < 1) {
+                    affectedSegments.push({
+                        segment: segment.name,
+                        floodZone: floodZone,
+                        distance: distance.toFixed(2) + ' km',
+                        severity: floodZone.severity
+                    });
+                }
+            });
+        });
+
+        // Generate alternative routes based on affected segments
+        const alternativeRoutes = [];
+        if (affectedSegments.some(s => s.segment.includes('Anna Salai') || s.segment.includes('Mount Road'))) {
+            alternativeRoutes.push({
+                name: 'East Coast Road (ECR)',
+                description: 'Coastal route avoiding central flood zones',
+                time: '25 min',
+                distance: '12 km',
+                reason: 'Avoids flooded areas on Mount Road',
+                severity: 'low'
+            });
+        }
+        
+        if (affectedSegments.some(s => s.segment.includes('Poonamallee'))) {
+            alternativeRoutes.push({
+                name: 'Outer Ring Road',
+                description: 'Longer route avoiding western flood zones',
+                time: '30 min',
+                distance: '15 km',
+                reason: 'Avoids flooding on Poonamallee High Road',
+                severity: 'low'
+            });
+        }
+
+        // Display the results
+        if (affectedSegments.length > 0) {
+            let alertHtml = `
+                <div class="bg-red-50 border-l-4 border-red-500 p-4 rounded-r-lg mb-4">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <svg class="h-5 w-5 text-red-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h2a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+                            </svg>
+                        </div>
+                        <div class="ml-3">
+                            <h3 class="text-sm font-medium text-red-800">Route Safety Alert</h3>
+                            <div class="mt-1 text-sm text-red-700">
+                                <p class="mb-2">
+                                    The route from <span class="font-semibold">${from}</span> to <span class="font-semibold">${to}</span> 
+                                    is affected by flooding in ${affectedSegments.length} area${affectedSegments.length > 1 ? 's' : ''}.
+                                </p>`;
+
+            // Add affected areas (up to 3)
+            affectedSegments.slice(0, 3).forEach(segment => {
+                alertHtml += `
+                    <div class="bg-red-100 p-2 rounded mt-2">
+                        <p class="font-medium">${segment.segment}</p>
+                        <div class="text-sm">
+                            <span>Water Level: <strong>${segment.floodZone.waterLevel_cm || 'N/A'} cm</strong></span>
+                            <span class="mx-2">•</span>
+                            <span>Severity: <span class="font-medium">${segment.severity || 'Moderate'}</span></span>
+                        </div>
+                    </div>`;
+            });
+
+            if (affectedSegments.length > 3) {
+                alertHtml += `
+                    <div class="text-sm text-red-600 mt-1">
+                        + ${affectedSegments.length - 3} more affected area${affectedSegments.length > 4 ? 's' : ''}
+                    </div>`;
+            }
+
+            alertHtml += `
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+
+            // Add alternative routes if available
+            if (alternativeRoutes.length > 0) {
+                alertHtml += `
+                <div class="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-lg">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <svg class="h-5 w-5 text-blue-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h2a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+                            </svg>
+                        </div>
+                        <div class="ml-3">
+                            <h3 class="text-sm font-medium text-blue-800">Suggested Alternate Route${alternativeRoutes.length > 1 ? 's' : ''}</h3>
+                            <div class="mt-2 space-y-3">`;
+
+                alternativeRoutes.forEach((route, index) => {
+                    alertHtml += `
+                                <div class="bg-white p-3 rounded border border-blue-100">
+                                    <div class="flex justify-between items-start">
+                                        <div>
+                                            <p class="font-medium">${route.name}</p>
+                                            <p class="text-sm text-gray-600">${route.description}</p>
+                                            <p class="text-xs text-gray-500 mt-1">${route.distance} • ${route.time} • <span class="text-blue-600">${route.reason}</span></p>
+                                        </div>
+                                        <button onclick="selectAlternativeRoute(${index})" class="text-blue-600 hover:text-blue-800 text-sm font-medium whitespace-nowrap ml-2">
+                                            View on map
+                                        </button>
+                                    </div>
+                                </div>`;
+                });
+
+                alertHtml += `
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+            }
+
+            // Add safety tips
+            alertHtml += `
+            <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-r-lg mt-4">
+                <div class="flex">
+                    <div class="flex-shrink-0">
+                        <svg class="h-5 w-5 text-yellow-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h2a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+                        </svg>
+                    </div>
+                    <div class="ml-3">
+                        <h3 class="text-sm font-medium text-yellow-800">Safety Tips</h3>
+                        <div class="mt-1 text-sm text-yellow-700 space-y-1">
+                            <p>• Do not attempt to drive through flooded areas</p>
+                            <p>• Follow official detour signs and instructions</p>
+                            <p>• Check local news for road closures</p>
+                        </div>
+                    </div>
+                </div>
+            </div>`;
+
+            routeStatus.innerHTML = alertHtml;
+        } else {
+            // No flooding detected on route
+            routeStatus.innerHTML = `
+                <div class="bg-green-50 border-l-4 border-green-500 p-4 rounded-r-lg">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <svg class="h-5 w-5 text-green-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                            </svg>
+                        </div>
+                        <div class="ml-3">
+                            <h3 class="text-sm font-medium text-green-800">Route Clear</h3>
+                            <div class="mt-1 text-sm text-green-700">
+                                <p>The route from <span class="font-semibold">${from}</span> to <span class="font-semibold">${to}</span> appears to be clear of flooding.</p>
+                                <p class="mt-1">Please remain cautious and watch for changing conditions.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+        }
+    }
+
+    // Function to handle alternative route selection
+    function selectAlternativeRoute(routeIndex) {
+        // In a real implementation, this would update the map with the selected route
+        showMessage(`Alternative route ${routeIndex + 1} selected. Updating map...`);
+        // Here you would add code to update the map with the selected route
+    }
+
+    // Enhanced SMS subscription function with flood alerts
+
+    async function subscribeForSms() {
+
+      const phoneNumberInput = document.getElementById('phoneNumber');
+
+      const phoneNumber = phoneNumberInput.value.trim();
+
+      const smsStatus = document.getElementById('smsStatus');
+
+      const phoneRegex = /^[0-9]{10,15}$/; // Simple validation for 10-15 digit numbers
+
+
+
+      if (phoneRegex.test(phoneNumber)) {
+
+        console.log(`Subscribing phone number: ${phoneNumber} for alerts.`);
+
+         
+
+        // Store phone number for SMS alerts
+
+        localStorage.setItem('subscribedPhone', phoneNumber);
+
+         
+
+        // Store subscription timestamp (24 hours validity)
+
+        const subscriptionData = {
+
+          phone: phoneNumber,
+
+          subscribedAt: new Date().getTime(),
+
+          lastAlertSent: 0
+
+        };
+
+        localStorage.setItem('smsSubscription', JSON.stringify(subscriptionData));
+
+         
+
+        smsStatus.innerHTML = `
+
+          <div class="text-green-700 font-semibold">
+
+            ✅ Subscription successful! You will receive flood alerts at +91${phoneNumber}.
+
+          </div>
+
+          <div class="text-sm text-gray-600 mt-2">
+
+            📱 SMS alerts will be sent for:
+
+            <br>• High-risk flood warnings (water level > 90cm)
+
+            <br>• Emergency situations in your area
+
+            <br>• Shelter availability updates
+
+            <br>• Route safety notifications
+
+          </div>
+
+          <div class="mt-2 text-xs text-blue-600">
+
+            (Alerts active for 24 hours. You can resubscribe anytime.)
+
+          </div>
+
+        `;
+
+        smsStatus.classList.remove('hidden');
+
+        phoneNumberInput.value = ''; // Clear the input
+
+         
+
+        // Send test SMS
+
+        try {
+
+          const testMessage = `Flood Alert System: You're now subscribed to Chennai Flood Alerts. 
+
+           
+
+Alerts will be sent for:
+
+- High-risk flood warnings
+
+- Emergency situations
+
+- Shelter updates
+
+- Route safety
+
+
+
+Reply STOP to unsubscribe.`;
+
+           
+
+          // Send a real SMS
+
+          const formattedPhone = phoneNumber.startsWith('+') ? phoneNumber : `+91${phoneNumber}`;
+
+          try {
+
+            const response = await fetch('http://localhost:3000/send-sms', {
+
+              method: 'POST',
+
+              headers: {
+
+                'Content-Type': 'application/json',
+
+              },
+
+              body: JSON.stringify({
+
+                to: formattedPhone,
+
+                message: testMessage
+
+              })
+
+            });
+
+             
+
+            if (!response.ok) {
+
+              throw new Error('Failed to send SMS');
+
+            }
+
+             
+
+            console.log('SMS sent successfully');
+
+            showMessage(`📱 Test SMS sent to ${formattedPhone}\n\nYou're now subscribed to Chennai Flood Alerts.`);
+
+          } catch (error) {
+
+            console.error('Error sending SMS:', error);
+
+            showMessage(`❌ Failed to send SMS to ${formattedPhone}. Please check the console for details.`);
+
+          }
+
+        } catch (error) {
+
+          console.error('Error sending SMS:', error);
+
+          showMessage('❌ Failed to send SMS. Please check the console for details.');
+
+        }
+
+         
+
+      } else {
+
+        showMessage("Please enter a valid 10-digit Indian mobile number (e.g., 9876543210).");
+
+      }
+
+    }
+
+
+
+    // Function to send SMS alert using Twilio API
+
+    async function sendSmsAlert(message, phoneNumber = null) {
+      console.log('sendSmsAlert called with:', { message: message.substring(0, 30) + '...', phoneNumber });
+      
+      try {
+        // Check if server is reachable first
+        try {
+          const testResponse = await fetch('/test');
+          if (!testResponse.ok) {
+            throw new Error('Server not responding');
+          }
+          console.log('Server connection test successful');
+        } catch (serverError) {
+          console.error('Server connection test failed:', serverError);
+          return false;
+        }
+
+        const subscription = JSON.parse(localStorage.getItem('smsSubscription') || '{}');
+        const now = new Date().getTime();
+
+        // Check if subscription is still valid (24 hours)
+        if (subscription.subscribedAt && (now - subscription.subscribedAt > 24 * 60 * 60 * 1000)) {
+          console.log('SMS subscription expired');
+          showNotification('❌ Your SMS subscription has expired. Please subscribe again.');
+          return false;
+        }
+
+        // Prevent spamming - minimum 30 minutes between alerts
+        if (subscription.lastAlertSent && (now - subscription.lastAlertSent < 30 * 60 * 1000)) {
+          const minutesLeft = Math.ceil((30 - (now - subscription.lastAlertSent) / (60 * 1000)));
+          console.log(`SMS alert skipped: too soon since last alert. Try again in ${minutesLeft} minutes.`);
+          showNotification(`⏳ Please wait ${minutesLeft} minutes before sending another alert.`);
+          return false;
+        }
+
+        const phone = phoneNumber || subscription.phone;
+        if (!phone) {
+          console.error('No phone number provided');
+          showNotification('❌ No phone number found. Please update your subscription.');
+          return false;
+        }
+
+        // Format phone number to E.164 format (e.g., +919876543210)
+        const formattedPhone = phone.startsWith('+') ? phone : `+91${phone}`;
+        
+        // Validate phone number format (basic validation)
+        if (!/^\+[1-9]\d{1,14}$/.test(formattedPhone)) {
+          console.error('Invalid phone number format:', formattedPhone);
+          showNotification('❌ Invalid phone number format. Please use a valid number.');
+          return false;
+        }
+
+        // Truncate message if too long for SMS
+        const maxLength = 160;
+        const finalMessage = message.length > maxLength 
+          ? message.substring(0, maxLength - 3) + '...' 
+          : message;
+
+        console.log('Sending SMS with details:', {
+          to: formattedPhone,
+          messagePreview: finalMessage.substring(0, 30) + '...',
+          length: finalMessage.length
+        });
+
+        // Call our backend API to send the SMS
+        const response = await fetch('/send-sms', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ to: formattedPhone, message: finalMessage })
+        });
+
+        const result = await response.json();
+        console.log('SMS API response:', result);
+
+        if (!response.ok) {
+          throw new Error(result.error || 'Failed to send SMS');
+        }
+
+        // Update last alert time on success
+        subscription.lastAlertSent = now;
+        localStorage.setItem('smsSubscription', JSON.stringify(subscription));
+        
+        console.log(`SMS sent successfully to ${formattedPhone}`);
+        showSmsInPanel(phone, finalMessage);
+        showNotification(`✅ SMS sent to ${formattedPhone}`);
+        
+        return true;
+
+      } catch (error) {
+        console.error('Error in sendSmsAlert:', {
+          error: error.message,
+          name: error.name,
+          stack: error.stack
+        });
+        
+        let errorMessage = '❌ Failed to send SMS';
+        if (error.message.includes('not a valid phone number')) {
+          errorMessage = '❌ Invalid phone number. Please check the number and try again.';
+        } else if (error.message.includes('not within your')) {
+          errorMessage = '❌ Cannot send to this number. Please check the country code.';
+        } else if (error.message.includes('authenticate')) {
+          errorMessage = '❌ Server authentication failed. Please contact support.';
+        }
+        
+        showNotification(errorMessage);
+        return false;
+      }
+
+    }
+
+     
+
+    // Function to show SMS in the notification panel
+
+    function showSmsInPanel(phone, message) {
+
+      const panel = document.getElementById('smsNotificationPanel');
+
+      const messagesContainer = document.getElementById('smsMessages');
+
+      const now = new Date();
+
+      const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+       
+
+      const messageElement = document.createElement('div');
+
+      messageElement.className = 'bg-blue-50 p-3 rounded-lg border border-blue-100';
+
+      messageElement.innerHTML = `
+
+        <div class="flex justify-between text-xs text-gray-500 mb-1">
+
+          <span>To: +91${phone}</span>
+
+          <span>${timeStr}</span>
+
+        </div>
+
+        <div class="text-gray-800">${message.replace(/\n/g, '<br>')}</div>
+
+      `;
+
+       
+
+      messagesContainer.prepend(messageElement);
+
+       
+
+      // Show the panel if it's hidden
+
+      if (panel.classList.contains('hidden')) {
+
+        panel.classList.remove('hidden');
+
+        // Auto-hide after 10 seconds if not hovered
+
+        setTimeout(() => {
+
+          if (!panel.matches(':hover')) {
+
+            panel.classList.add('hidden');
+
+          }
+
+        }, 10000);
+
+      }
+
+       
+
+      // Auto-scroll to bottom
+
+      messagesContainer.scrollTop = 0;
+
+    }
+
+     
+
+    // Function to show a temporary notification
+
+    function showNotification(message, duration = 3000) {
+
+      const notification = document.createElement('div');
+
+      notification.className = 'fixed bottom-4 right-4 bg-blue-600 text-white px-4 py-2 rounded-lg shadow-lg z-50 animate-fade-in';
+
+      notification.textContent = message;
+
+      document.body.appendChild(notification);
+
+       
+
+      // Add animation style if not exists
+
+      if (!document.getElementById('notification-styles')) {
+
+        const style = document.createElement('style');
+
+        style.id = 'notification-styles';
+
+        style.textContent = `
+
+          @keyframes fadeIn {
+
+            from { opacity: 0; transform: translateY(20px); }
+
+            to { opacity: 1; transform: translateY(0); }
+
+          }
+
+          .animate-fade-in {
+
+            animation: fadeIn 0.3s ease-out forwards;
+
+          }
+
+        `;
+
+        document.head.appendChild(style);
+
+      }
+
+       
+
+      setTimeout(() => {
+
+        notification.style.opacity = '0';
+
+        notification.style.transform = 'translateY(20px)';
+
+        notification.style.transition = 'opacity 0.3s, transform 0.3s';
+
+        setTimeout(() => notification.remove(), 300);
+
+      }, duration - 300);
+
+    }
+
+
+
+    // Function to check if user should receive SMS alert
+
+    function shouldSendSmsAlert(zone, userLocation) {
+
+      try {
+
+        // Check if user has an active subscription
+
+        const subscription = JSON.parse(localStorage.getItem('smsSubscription') || '{}');
+
+        const now = new Date().getTime();
+
+         
+
+        if (!subscription.phone || (now - subscription.subscribedAt > 24 * 60 * 60 * 1000)) {
+
+          return false; // No active subscription
+
+        }
+
+         
+
+        // Check if this is a high-priority alert
+
+        const isHighPriority = zone.severity === 'high' || zone.waterLevel_cm > 90;
+
+         
+
+        // For high priority, send alert even if far away
+
+        if (isHighPriority) return true;
+
+         
+
+        // For medium priority, only send if nearby
+
+        if (zone.severity === 'medium') {
+
+          const distance = getDistance(userLocation.lat, userLocation.lon, zone.lat, zone.lon);
+
+          return distance < 5; // Within 5km
+
+        }
+
+         
+
+        return false;
+
+      } catch (error) {
+
+        console.error('Error in shouldSendSmsAlert:', error);
+
+        return false;
+
+      }
+
+    }
+
+
+
+    // Enhanced emergency button functionality
+
+    function triggerEmergency() {
+
+      const currentTime = new Date().toLocaleString();
+
+      const locationStr = `${userLocation.street} (${userLocation.lat.toFixed(4)}, ${userLocation.lon.toFixed(4)})`;
+
+       
+
+      // Find nearest emergency services
+
+      const nearestShelters = findNearestShelters(userLocation.lat, userLocation.lon, 2);
+
+      const nearestFlood = floodData
+
+        .filter(zone => zone.severity !== 'none')
+
+        .map(zone => ({
+
+          ...zone,
+
+          distance: getDistance(userLocation.lat, userLocation.lon, zone.lat, zone.lon)
+
+        }))
+
+        .sort((a, b) => a.distance - b.distance)[0];
+
+       
+
+      let emergencyMessage = `🚨 EMERGENCY ALERT 🚨\n\n`;
+
+      emergencyMessage += `📍 Your Location: ${locationStr}\n`;
+
+      emergencyMessage += `🕐 Time: ${currentTime}\n\n`;
+
+       
+
+      if (nearestFlood) {
+
+        emergencyMessage += `⚠️ NEARBY FLOOD DETECTED:\n`;
+
+        emergencyMessage += `• ${nearestFlood.streetName}\n`;
+
+        emergencyMessage += `• Water Level: ${nearestFlood.waterLevel_cm}cm\n`;
+
+        emergencyMessage += `• Distance: ${nearestFlood.distance.toFixed(1)}km\n\n`;
+
+      }
+
+       
+
+      emergencyMessage += `🏥 NEAREST SHELTERS:\n`;
+
+      nearestShelters.forEach(shelter => {
+
+        emergencyMessage += `• ${shelter.name} (${shelter.distance.toFixed(1)}km)\n`;
+
+        emergencyMessage += ` 📞 ${shelter.contact}\n`;
+
+      });
+
+       
+
+      emergencyMessage += `\n📞 EMERGENCY CONTACTS:\n`;
+
+      emergencyMessage += `• Police: ${emergencyContacts.police}\n`;
+
+      emergencyMessage += `• Ambulance: ${emergencyContacts.ambulance}\n`;
+
+      emergencyMessage += `• Fire: ${emergencyContacts.fire}\n`;
+
+      emergencyMessage += `• Disaster Management: ${emergencyContacts.disasterManagement}\n`;
+
+      emergencyMessage += `• Chennai Corporation: ${emergencyContacts.chennaiCorporation}\n`;
+
+       
+
+      emergencyMessage += `\n✅ Your location has been shared with emergency services.\n`;
+
+      emergencyMessage += `📱 SMS alert sent to registered contacts.\n`;
+
+      emergencyMessage += `🔔 Follow instructions from authorities.`;
+
+       
+
+      showMessage(emergencyMessage);
+
+       
+
+      // Simulate sending emergency SMS
+
+      setTimeout(() => {
+
+        console.log('Emergency SMS sent to registered contacts');
+
+        showMessage('📱 Emergency SMS sent to your registered contacts and emergency services.');
+
+      }, 2000);
+
+    }
+
+
+
+    // Enhanced offline mode functionality
+
+    function toggleOfflineMode() {
+
+      const btn = document.getElementById('toggleOfflineBtn');
+
+      const indicator = document.getElementById('offlineIndicator');
+
+       
+
+      if (btn.textContent === OFFLINE_MODE_DISABLED) {
+
+        // Enable offline mode
+
+        clearInterval(updateInterval);
+
+        isOfflineMode = true;
+
+        cachedData = JSON.parse(JSON.stringify(floodData)); // Deep copy for offline use
+
+        btn.textContent = OFFLINE_MODE_ENABLED;
+
+        btn.className = 'w-full sm:w-auto px-6 py-3 bg-orange-600 text-white font-medium rounded-full hover:bg-orange-700 transition duration-300 transform hover:scale-105 shadow-md';
+
+        indicator.classList.remove('hidden');
+
+         
+
+        showMessage(`📱 Offline Mode Activated\n\n• Real-time updates paused\n• Using cached flood data\n• Emergency features still available\n• SMS alerts will queue for when online\n\nLast updated: ${new Date().toLocaleTimeString()}`);
+
+      } else {
+
+        // Disable offline mode
+
+        isOfflineMode = false;
+
+        cachedData = null;
+
+        btn.textContent = OFFLINE_MODE_DISABLED;
+
+        btn.className = 'w-full sm:w-auto px-6 py-3 bg-gray-600 text-white font-medium rounded-full hover:bg-gray-700 transition duration-300 transform hover:scale-105 shadow-md';
+
+        indicator.classList.add('hidden');
+
+        startRealTimeUpdates();
+
+         
+
+        showMessage("🌐 Online Mode: Real-time updates have resumed. All features are now active.");
+
+      }
+
+    }
+
+
+
+    // Enhanced real-time updates with SMS alerts and better prediction
+
+    function startRealTimeUpdates() {
+
+      if (isOfflineMode) return;
+
+       
+
+      // Simulate a "real-time" update every 5 seconds
+
+      updateInterval = setInterval(() => {
+
+        const previousData = JSON.parse(JSON.stringify(floodData));
+
+         
+
+        // Simulate sensor data changing with AI prediction
+
+        floodData.forEach((zone, index) => {
+
+          const floodRisk = predictFloodRisk(zone, Date.now());
+
+          const previousSeverity = previousData[index].severity;
+
+           
+
+          // More realistic water level changes based on risk
+
+          if (floodRisk > 0.7) {
+
+            zone.waterLevel_cm = Math.min(300, zone.waterLevel_cm + Math.random() * 15 + 5);
+
+          } else if (floodRisk > 0.4) {
+
+            zone.waterLevel_cm = Math.min(250, zone.waterLevel_cm + Math.random() * 10 - 2);
+
+          } else {
+
+            zone.waterLevel_cm = Math.max(0, zone.waterLevel_cm + Math.random() * 6 - 8);
+
+          }
+
+           
+
+          // Update severity based on water level
+
+          if (zone.waterLevel_cm < 10) zone.severity = 'none';
+
+          else if (zone.waterLevel_cm < 50) zone.severity = 'low';
+
+          else if (zone.waterLevel_cm < 150) zone.severity = 'medium';
+
+          else zone.severity = 'high';
+
+           
+
+          // Update prediction
+
+          if (zone.severity !== 'none') {
+
+            zone.predictedArrival = new Date(Date.now() + Math.random() * 45 * 60 * 1000);
+
+          } else {
+
+            zone.predictedArrival = null;
+
+          }
+
+           
+
+          zone.lastUpdated = new Date();
+
+           
+
+          // Send SMS alert if severity increased significantly
+
+          if (previousSeverity !== zone.severity && zone.severity !== 'none') {
+
+            if (shouldSendSmsAlert(zone, userLocation)) {
+
+              const alertMessage = `🚨 FLOOD ALERT 🚨\n\n${zone.streetName}\nWater Level: ${zone.waterLevel_cm}cm\nSeverity: ${zone.severity.toUpperCase()}\nTime: ${zone.lastUpdated.toLocaleTimeString()}\n\nStay safe! Avoid this area.`;
+
+              sendSmsAlert(alertMessage);
+
+            }
+
+          }
+
+        });
+
+         
+
+        renderFloodZones();
+
+         
+
+        // Update status if user has checked their location
+
+        if (document.getElementById('statusContainer').classList.contains('hidden') === false) {
+
+          checkFloodStatus();
+
+        }
+
+      }, 5000);
+
+    }
+
+     
+
+    // Function to call emergency contacts
+
+    function callEmergency(contactType) {
+
+      const contact = emergencyContacts[contactType];
+
+      const contactName = contactType.charAt(0).toUpperCase() + contactType.slice(1).replace(/([A-Z])/g, ' $1');
+
+       
+
+      showMessage(`📞 Calling ${contactName}\n\nNumber: ${contact}\n\nYour location will be shared with emergency services.\n\nIn a real app, this would initiate the call.`);
+
+    }
+
+
+
+    // Function to toggle sidebar
+
+    function toggleSidebar() {
+
+      const sidebar = document.getElementById('sidebar');
+
+      const toggleIcon = document.getElementById('toggleIcon');
+
+       
+
+      sidebar.classList.toggle('collapsed');
+
+       
+
+      if (sidebar.classList.contains('collapsed')) {
+
+        toggleIcon.textContent = '☰';
+
+      } else {
+
+        toggleIcon.textContent = '✕';
+
+      }
+
+    }
+
+
+
+    // Function to update dashboard statistics
+
+    function updateDashboard() {
+
+      const activeFloods = floodData.filter(zone => zone.severity !== 'none').length;
+
+      document.getElementById('floodStats').textContent = activeFloods;
+
+       
+
+      // Update last update time
+
+      const now = new Date();
+
+      document.getElementById('lastUpdateTime').textContent = now.toLocaleTimeString();
+
+       
+
+      // Update user location display
+
+      document.getElementById('userLocationDisplay').textContent = userLocation.street;
+
+       
+
+      // Calculate user risk level
+
+      let userRisk = 'LOW';
+
+      const nearestFlood = floodData
+
+        .filter(zone => zone.severity !== 'none')
+
+        .map(zone => ({
+
+          ...zone,
+
+          distance: getDistance(userLocation.lat, userLocation.lon, zone.lat, zone.lon)
+
+        }))
+
+        .sort((a, b) => a.distance - b.distance)[0];
+
+       
+
+      if (nearestFlood) {
+
+        if (nearestFlood.distance < 1 && nearestFlood.severity === 'high') {
+
+          userRisk = 'CRITICAL';
+
+        } else if (nearestFlood.distance < 2 && (nearestFlood.severity === 'high' || nearestFlood.severity === 'medium')) {
+
+          userRisk = 'HIGH';
+
+        } else if (nearestFlood.distance < 5 && nearestFlood.severity !== 'none') {
+
+          userRisk = 'MEDIUM';
+
+        }
+
+      }
+
+       
+
+      document.getElementById('userRiskLevel').textContent = userRisk;
+
+       
+
+      // Update risk level color
+
+      const riskElement = document.getElementById('userRiskLevel');
+
+      const riskContainer = riskElement.parentElement;
+
+      riskContainer.className = riskContainer.className.replace(/from-\w+-\d+ to-\w+-\d+/, 
+
+        userRisk === 'CRITICAL' ? 'from-red-500 to-red-600' :
+
+        userRisk === 'HIGH' ? 'from-red-500 to-orange-500' :
+
+        userRisk === 'MEDIUM' ? 'from-amber-500 to-orange-500' :
+
+        'from-green-500 to-green-600'
+
+      );
+
+    }
+
+
+
+    // Function to switch between tabs in the Educational Resources section
+    function showTab(tabId) {
+      // Hide all tab content
+      document.querySelectorAll('.tab-pane').forEach(pane => {
+        pane.classList.add('hidden');
+      });
+      
+      // Remove active class from all tab buttons
+      document.querySelectorAll('.tab-button').forEach(button => {
+        button.classList.remove('active', 'border-blue-500', 'text-blue-600');
+        button.classList.add('text-gray-500');
+      });
+      
+      // Show the selected tab content
+      document.getElementById(tabId).classList.remove('hidden');
+      
+      // Add active class to the clicked tab button
+      const activeButton = Array.from(document.querySelectorAll('.tab-button')).find(btn => 
+        btn.getAttribute('onclick').includes(`'${tabId}'`)
+      );
+      if (activeButton) {
+        activeButton.classList.add('active', 'border-blue-500', 'text-blue-600');
+        activeButton.classList.remove('text-gray-500');
+      }
+    }
+
+    // Function to show educational content in a modal
+    function showEducationalContent(contentType) {
+      let title = '';
+      let content = '';
+      
+      // Define content for each type
+      switch(contentType) {
+        case 'preparedness':
+          title = 'Flood Preparedness Guide';
+          content = `
+            <div class="space-y-4">
+              <h3 class="font-bold text-lg mb-2">Before a Flood</h3>
+              <ul class="list-disc pl-5 space-y-2">
+                <li>Know your area's flood risk and elevation above flood stages</li>
+                <li>Identify nearby bodies of water and their flood potential</li>
+                <li>Learn the elevation level of your property and nearby areas</li>
+                <li>Identify levees and dams in your area and determine if they pose a hazard</li>
+                <li>Sign up for your community's warning system</li>
+              </ul>
+              
+              <h3 class="font-bold text-lg mt-4 mb-2">Create a Plan</h3>
+              <ul class="list-disc pl-5 space-y-2">
+                <li>Plan and practice a flood evacuation route</li>
+                <li>Assemble an emergency supply kit</li>
+                <li>Plan for your pets' safety</li>
+                <li>Keep important documents in a waterproof container</li>
+                <li>Consider flood insurance options</li>
+              </ul>
+              
+              <h3 class="font-bold text-lg mt-4 mb-2">During a Flood</h3>
+              <ul class="list-disc pl-5 space-y-2">
+                <li>Move to higher ground immediately</li>
+                <li>Follow evacuation orders and don't wait</li>
+                <li>Do not walk through moving water</li>
+                <li>Do not drive into flooded areas</li>
+                <li>Be aware of areas where floodwaters have receded</li>
+              </ul>
+            </div>
+          `;
+          break;
+          
+        case 'emergency-kit':
+          title = 'Emergency Kit Checklist';
+          content = `
+            <div class="space-y-4">
+              <h3 class="font-bold text-lg mb-2">Basic Emergency Supply Kit</h3>
+              <p class="text-gray-700">Gather these essential items and store them in a waterproof container:</p>
+              
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="space-y-2">
+                  <h4 class="font-semibold">Essentials</h4>
+                  <ul class="list-disc pl-5 space-y-1">
+                    <li>Water (1 gallon per person per day, 3-day supply)</li>
+                    <li>Non-perishable food (3-day supply)</li>
+                    <li>Manual can opener</li>
+                    <li>Battery-powered or hand-crank radio</li>
+                    <li>Flashlight with extra batteries</li>
+                    <li>First aid kit</li>
+                    <li>Whistle to signal for help</li>
+                  </ul>
+                </div>
+                
+                <div class="space-y-2">
+                  <h4 class="font-semibold">Additional Items</h4>
+                  <ul class="list-disc pl-5 space-y-1">
+                    <li>Prescription medications and glasses</li>
+                    <li>Infant formula and diapers</li>
+                    <li>Pet food and extra water</li>
+                    <li>Important documents in waterproof container</li>
+                    <li>Cash or traveler's checks</li>
+                    <li>Emergency reference material</li>
+                    <li>Sleeping bag or warm blanket per person</li>
+                  </ul>
+                </div>
+              </div>
+              
+              <h3 class="font-bold text-lg mt-4 mb-2">Maintaining Your Kit</h3>
+              <ul class="list-disc pl-5 space-y-1">
+                <li>Keep canned food in a cool, dry place</li>
+                <li>Store boxed food in tightly closed containers</li>
+                <li>Replace expired items as needed</li>
+                <li>Re-think your needs every year and update your kit as your family's needs change</li>
+              </ul>
+            </div>
+          `;
+          break;
+          
+        case 'first-aid':
+          title = 'First Aid for Flood Situations';
+          content = `
+            <div class="space-y-4">
+              <h3 class="font-bold text-lg mb-2">Basic First Aid Procedures</h3>
+              
+              <div class="space-y-4">
+                <div>
+                  <h4 class="font-semibold">Cuts and Scrapes</h4>
+                  <ul class="list-disc pl-5 mt-1 space-y-1">
+                    <li>Clean the wound with clean, running water</li>
+                    <li>Apply pressure to stop bleeding</li>
+                    <li>Apply antibiotic ointment</li>
+                    <li>Cover with a sterile bandage</li>
+                    <li>Watch for signs of infection</li>
+                  </ul>
+                </div>
+                
+                <div>
+                  <h4 class="font-semibold">CPR Basics</h4>
+                  <ol class="list-decimal pl-5 mt-1 space-y-1">
+                    <li>Check for responsiveness and breathing</li>
+                    <li>Call emergency services</li>
+                    <li>Place hands on center of chest</li>
+                    <li>Push hard and fast (100-120 compressions per minute)</li>
+                    <li>Give rescue breaths if trained to do so</li>
+                  </ol>
+                </div>
+                
+                <div>
+                  <h4 class="font-semibold">Waterborne Illness Prevention</h4>
+                  <ul class="list-disc pl-5 mt-1 space-y-1">
+                    <li>Drink only clean, treated water</li>
+                    <li>Wash hands frequently with clean water and soap</li>
+                    <li>Avoid floodwater contact if you have open wounds</li>
+                    <li>Disinfect contaminated surfaces</li>
+                  </ul>
+                </div>
+                
+                <div>
+                  <h4 class="font-semibold">When to Seek Medical Attention</h4>
+                  <ul class="list-disc pl-5 mt-1 space-y-1">
+                    <li>Difficulty breathing or shortness of breath</li>
+                    <li>Persistent pain or pressure in the chest or abdomen</li>
+                    <li>Signs of infection (redness, swelling, pus)</li>
+                    <li>High fever (above 101°F or 38.3°C)</li>
+                    <li>Severe dehydration symptoms</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          `;
+          break;
+      }
+      
+      // Create modal HTML
+      const modalHTML = `
+        <div id="educationalModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div class="p-6">
+              <div class="flex justify-between items-center mb-4">
+                <h2 class="text-2xl font-bold text-gray-800">${title}</h2>
+                <button onclick="document.getElementById('educationalModal').remove()" class="text-gray-500 hover:text-gray-700">
+                  <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                  </svg>
+                </button>
+              </div>
+              <div class="prose max-w-none">
+                ${content}
+              </div>
+              <div class="mt-6 flex justify-end">
+                <button onclick="document.getElementById('educationalModal').remove()" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+      
+      // Add modal to the body
+      document.body.insertAdjacentHTML('beforeend', modalHTML);
+    }
+
+    // Set up auto-update every 5 minutes
+    setInterval(updateFloodData, 5 * 60 * 1000);
+
+    // Enhanced initial setup on page load
+    window.onload = function() {
+
+      // Initialize the real Chennai map first
+
+      initializeMap();
+
+       
+
+      // Then render flood zones
+
+      renderFloodZones();
+
+       
+
+      // Start real-time updates
+
+      startRealTimeUpdates();
+
+       
+
+      // Update dashboard
+
+      updateDashboard();
+
+       
+
+      // Update dashboard every 5 seconds
+
+      setInterval(updateDashboard, 5000);
+
+       
+
+      // Check if user has subscribed to SMS
+
+      const subscribedPhone = localStorage.getItem('subscribedPhone');
+
+      if (subscribedPhone) {
+
+        document.getElementById('smsStatus').innerHTML = `
+
+          <div class="text-green-700 font-semibold">
+
+            ✅ Already subscribed to SMS alerts at ${subscribedPhone}
+
+          </div>
+
+        `;
+
+        document.getElementById('smsStatus').classList.remove('hidden');
+
+      }
+
+    };
+
+
+
+  </script>
+
+</body>
+
+</html>
+
