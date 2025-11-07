@@ -63,53 +63,46 @@
      
 
     .map-section {
-
       flex: 1;
-
       position: relative;
-
       background: #f8fafc;
-
+      width: 100%;
+      height: 100%;
     }
 
      
 
     .map-container {
-
       position: absolute;
-
       top: 0;
-
+      left: 0;
       right: 0;
-
-      width: 70%;
-
+      width: 100%;
       height: 100%;
-
       z-index: 1;
-
       transition: all 0.3s ease;
-
       background-color: #e2e8f0;
-
     }
 
     /* Mobile-specific styles */
 
     @media (max-width: 768px) {
-
       .map-container {
-
         position: relative;
-
         width: 100%;
-
-        height: 50vh; /* 50% of viewport height */
-
-        min-height: 300px; /* Ensure it's not too small */
-
+        height: 70vh;
+        min-height: 300px;
+      }
+      
+      .sidebar {
+        position: relative;
+        width: 100%;
+        max-width: 100%;
+        top: 0;
+        right: 0;
+        border-radius: 0;
+        max-height: none;
         margin-top: 10px;
-
       }
 
       /* Ensure the map takes full width on mobile */
@@ -161,19 +154,19 @@
      
 
     .sidebar {
-
-      width: 400px;
-
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      width: 350px;
+      max-width: 90%;
       background: rgba(255, 255, 255, 0.95);
-
       backdrop-filter: blur(10px);
-
-      border-left: 1px solid rgba(255, 255, 255, 0.2);
-
-      overflow-y: auto;
-
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      z-index: 1000;
       transition: transform 0.3s ease;
-
+      max-height: 90vh;
+      overflow-y: auto;
     }
 
      
