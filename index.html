@@ -80,13 +80,71 @@
 
       top: 0;
 
-      left: 0;
-
       right: 0;
 
-      bottom: 0;
+      width: 70%;
+
+      height: 100%;
+
+      z-index: 1;
+
+      transition: all 0.3s ease;
 
       background-color: #e2e8f0;
+
+    }
+
+    /* Mobile-specific styles */
+
+    @media (max-width: 768px) {
+
+      .map-container {
+
+        position: relative;
+
+        width: 100%;
+
+        height: 50vh; /* 50% of viewport height */
+
+        min-height: 300px; /* Ensure it's not too small */
+
+        margin-top: 10px;
+
+      }
+
+      /* Ensure the map takes full width on mobile */
+
+      #map {
+
+        width: 100% !important;
+
+        height: 100% !important;
+
+      }
+
+      /* Adjust layout for mobile */
+
+      .map-section {
+
+        position: relative !important;
+
+        height: auto !important;
+
+      }
+
+      /* Make sure controls are touch-friendly */
+
+      .leaflet-bar a, 
+
+      .leaflet-bar a:hover {
+
+        width: 30px !important;
+
+        height: 30px !important;
+
+        line-height: 30px !important;
+
+      }
 
     }
 
