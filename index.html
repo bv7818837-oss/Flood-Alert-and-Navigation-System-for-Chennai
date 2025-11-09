@@ -1114,6 +1114,25 @@
     flex-direction: column;
     gap: 6px;
   }
+  
+  /* Hide mobile-only elements on desktop */
+  .mobile-only {
+    display: none;
+  }
+  
+  @media (max-width: 768px) {
+    .mobile-only {
+      display: block;
+    }
+    
+    /* Adjust button styles for mobile */
+    .floating-btn {
+      font-size: 12px;
+      padding: 8px 10px;
+      border-radius: 6px;
+      margin: 2px 0;
+    }
+  }
 
        
 
@@ -1386,17 +1405,17 @@
       <!-- Floating Controls -->
 
       <div class="floating-controls">
+        <!-- Mobile Sidebar Toggle Button -->
+        <button id="mobileSidebarToggle" class="floating-btn primary mobile-only" onclick="toggleSidebar()">
+          📋 Open Sidebar
+        </button>
 
         <button id="getLocationBtn" class="floating-btn primary">
-
           🏠 Check My Flood Status
-
         </button>
 
         <button id="emergencyBtn" class="floating-btn emergency">
-
           🚨 Emergency Alert
-
         </button>
 
         <button id="toggleOfflineBtn" class="floating-btn offline">
