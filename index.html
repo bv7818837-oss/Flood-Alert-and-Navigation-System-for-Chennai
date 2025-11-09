@@ -814,17 +814,32 @@
       .sidebar-toggle {
         display: flex;
         position: fixed;
-        top: 10px;
-        right: 10px;
+        top: 15px;
+        right: 15px;
         z-index: 1001;
         background: white;
-        border-radius: 4px;
-        padding: 6px 10px;
-        font-size: 12px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-        border: none;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
         align-items: center;
-        gap: 4px;
+        justify-content: center;
+        border: none;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        cursor: pointer;
+        transition: transform 0.3s ease;
+      }
+      
+      .sidebar-toggle:hover {
+        transform: scale(1.1);
+      }
+      
+      .toggle-icon {
+        font-size: 20px;
+        transition: transform 0.3s ease;
+      }
+      
+      .sidebar.collapsed .toggle-icon {
+        transform: rotate(180deg);
       }
 
       .floating-controls {
@@ -1775,10 +1790,8 @@
 
     <!-- Sidebar Toggle -->
 
-    <button id="sidebarToggle" class="sidebar-toggle">
-
-      <span id="toggleIcon">☰</span>
-
+    <button class="sidebar-toggle" onclick="toggleSidebar()">
+      <span class="toggle-icon">→</span>
     </button>
 
   </div>
@@ -4997,12 +5010,6 @@ Reply STOP to unsubscribe.`;
       const toggleBtn = document.querySelector('.sidebar-toggle');
       
       sidebar.classList.toggle('collapsed');
-      
-      if (sidebar.classList.contains('collapsed')) {
-        toggleBtn.innerHTML = '<span>☰</span> Show Menu';
-      } else {
-        toggleBtn.innerHTML = '<span>✕</span> Hide Menu';
-      }
       
       // Prevent event bubbling to avoid immediate closing
       if (event) {
