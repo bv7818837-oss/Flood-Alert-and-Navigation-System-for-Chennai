@@ -749,69 +749,104 @@
      
 
     @media (max-width: 768px) {
+      /* Improved mobile layout */
+      html, body {
+        height: 100%;
+        overflow: hidden;
+      }
+
+      .app-container {
+        flex-direction: column;
+        height: 100vh;
+        position: relative;
+      }
+
+      .map-section {
+        height: 60vh;
+        width: 100%;
+        position: relative;
+        z-index: 1;
+      }
+
+      .map-container, #map {
+        height: 100% !important;
+        width: 100% !important;
+      }
 
       .sidebar {
-
-        width: 100%;
-
         position: fixed;
-
-        top: 0;
-
+        bottom: 0;
+        left: 0;
         right: 0;
-
-        height: 100vh;
-
+        height: 40vh;
+        width: 100%;
+        border-radius: 20px 20px 0 0;
+        box-shadow: 0 -5px 15px rgba(0,0,0,0.1);
         z-index: 1000;
-
+        transition: transform 0.3s ease-in-out;
+        padding: 15px 15px 60px 15px;
+        overflow-y: auto;
+        background: rgba(255, 255, 255, 0.98);
+        backdrop-filter: blur(10px);
       }
-
-       
 
       .sidebar.collapsed {
-
-        transform: translateX(100%);
-
+        transform: translateY(calc(100% - 50px));
       }
 
-       
+      .sidebar-toggle {
+        display: flex;
+        position: fixed;
+        bottom: 10px;
+        right: 20px;
+        z-index: 1001;
+        background: white;
+        border-radius: 50px;
+        padding: 8px 16px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      }
 
       .floating-controls {
-
+        position: fixed;
         top: 10px;
-
         left: 10px;
-
-        right: 10px;
-
+        z-index: 1000;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
       }
-
-       
 
       .floating-btn {
-
-        min-width: auto;
-
-        padding: 10px 16px;
-
-        font-size: 14px;
-
+        min-width: 120px;
+        padding: 8px 12px;
+        font-size: 11px;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.15);
       }
 
-       
-
+      /* Adjust dashboard cards for mobile */
       .dashboard-grid {
-
         grid-template-columns: 1fr;
-
+        gap: 10px;
+        margin-bottom: 10px;
       }
 
-       
-
+      /* Make emergency contacts more compact */
       .emergency-contacts {
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        margin-bottom: 15px;
+      }
 
-        grid-template-columns: 1fr;
-
+      /* Add handle indicator for collapsible sidebar */
+      .sidebar::before {
+        content: '';
+        display: block;
+        width: 40px;
+        height: 4px;
+        background: #e5e7eb;
+        border-radius: 2px;
+        margin: 0 auto 10px auto;
       }
 
     }
@@ -4928,28 +4963,34 @@ Reply STOP to unsubscribe.`;
     // Function to toggle sidebar
 
     function toggleSidebar() {
-
-      const sidebar = document.getElementById('sidebar');
-
-      const toggleIcon = document.getElementById('toggleIcon');
-
-       
-
+      const sidebar = document.querySelector('.sidebar');
+      const toggleBtn = document.querySelector('.sidebar-toggle');
+      
       sidebar.classList.toggle('collapsed');
-
-       
-
+      
       if (sidebar.classList.contains('collapsed')) {
-
-        toggleIcon.textContent = '☰';
-
+        toggleBtn.innerHTML = '<span>☰</span> Show Menu';
       } else {
-
-        toggleIcon.textContent = '✕';
-
+        toggleBtn.innerHTML = '<span>✕</span> Hide Menu';
       }
-
+      
+      // Prevent event bubbling to avoid immediate closing
+      if (event) {
+        event.stopPropagation();
+      }
     }
+
+    // Close sidebar when clicking outside
+    window.addEventListener('click', function(event) {
+      const sidebar = document.querySelector('.sidebar');
+      const toggleBtn = document.querySelector('.sidebar-toggle');
+      
+      if (!sidebar.classList.contains('collapsed') && 
+          !event.target.closest('.sidebar') && 
+          !event.target.closest('.sidebar-toggle')) {
+        toggleSidebar();
+      }
+    });
 
 
 
