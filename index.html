@@ -1115,13 +1115,41 @@
     gap: 6px;
   }
   
-  /* Hide mobile-only elements on desktop */
-  .mobile-only {
+  /* Mobile sidebar styles */
+  /* Mobile sidebar styles */
+  .mobile-sidebar {
     display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: white;
+    z-index: 2000;
+    padding: 20px;
+    overflow-y: auto;
+    transform: translateX(100%);
+    transition: transform 0.3s ease;
+  }
+  
+  .mobile-sidebar.open {
+    transform: translateX(0);
+  }
+  
+  .close-sidebar {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background: #f0f0f0;
+    border: none;
+    border-radius: 4px;
+    padding: 8px 12px;
+    cursor: pointer;
+    z-index: 2001;
   }
   
   @media (max-width: 768px) {
-    .mobile-only {
+    .mobile-sidebar {
       display: block;
     }
     
@@ -1403,10 +1431,9 @@
        
 
       <!-- Floating Controls -->
-
       <div class="floating-controls">
         <!-- Mobile Sidebar Toggle Button -->
-        <button id="mobileSidebarToggle" class="floating-btn primary mobile-only" onclick="toggleSidebar()">
+        <button id="mobileSidebarToggle" class="floating-btn primary mobile-only" onclick="toggleMobileSidebar()">
           📋 Open Sidebar
         </button>
 
@@ -1472,8 +1499,26 @@
 
     </div> <!-- End map-section -->
 
-    <div id="sidebar" class="sidebar">
-      <div class="sidebar-toggle" onclick="toggleSidebar()">
+    <!-- Desktop Sidebar -->
+    <div class="sidebar collapsed" id="sidebar">
+      <div class="desktop-only">
+        <!-- Desktop sidebar content -->
+      </div>
+    </div>
+    
+    <!-- Mobile Sidebar (Fullscreen) -->
+    <div class="mobile-sidebar" id="mobileSidebar">
+      <div style="position: relative; height: 100%;">
+        <button class="close-sidebar" onclick="toggleMobileSidebar()" style="position: absolute; top: 15px; right: 15px; z-index: 10; background: #f0f0f0; border: none; border-radius: 4px; padding: 8px 12px; cursor: pointer;">
+          ✕ Close
+        </button>
+        <div class="sidebar-content" style="padding-top: 50px;">
+          <!-- Mobile sidebar content will be moved here by JavaScript -->
+        </div>
+      </div>
+    </div>
+
+    <div class="sidebar-toggle" onclick="toggleSidebar()">
         <span id="toggleIcon">▼</span> Toggle Controls
       </div>
       <div class="sidebar-content">
@@ -5320,8 +5365,24 @@ Reply STOP to unsubscribe.`;
 
 
 
-    // Function to toggle sidebar
-
+    // Function to toggle mobile sidebar
+    function toggleMobileSidebar() {
+      const sidebar = document.getElementById('mobileSidebar');
+      const toggleBtn = document.getElementById('mobileSidebarToggle');
+      
+      if (sidebar.classList.contains('open')) {
+        sidebar.classList.remove('open');
+        if (toggleBtn) toggleBtn.textContent = '📋 Open Sidebar';
+      } else {
+        sidebar.classList.add('open');
+        if (toggleBtn) toggleBtn.textContent = '✕ Close Sidebar';
+      }
+      
+      // Prevent body scroll when sidebar is open
+      document.body.style.overflow = sidebar.classList.contains('open') ? 'hidden' : '';
+    }
+    
+    // Function to toggle desktop sidebar
     function toggleSidebar() {
       const sidebar = document.getElementById('sidebar');
       const toggleIcon = document.getElementById('toggleIcon');
