@@ -1116,7 +1116,6 @@
   }
   
   /* Mobile sidebar styles */
-  /* Mobile sidebar styles */
   .mobile-sidebar {
     display: none;
     position: fixed;
@@ -1137,9 +1136,9 @@
   }
   
   .close-sidebar {
-    position: absolute;
-    top: 10px;
-    left: 10px;
+    position: fixed;
+    top: 15px;
+    right: 15px;
     background: #f0f0f0;
     border: none;
     border-radius: 4px;
@@ -1148,12 +1147,18 @@
     z-index: 2001;
   }
   
+  @media (min-width: 769px) {
+    .mobile-sidebar,
+    .mobile-sidebar-toggle {
+      display: none !important;
+    }
+  }
+  
   @media (max-width: 768px) {
     .mobile-sidebar {
       display: block;
     }
     
-    /* Adjust button styles for mobile */
     .floating-btn {
       font-size: 12px;
       padding: 8px 10px;
@@ -1508,13 +1513,9 @@
     
     <!-- Mobile Sidebar (Fullscreen) -->
     <div class="mobile-sidebar" id="mobileSidebar">
-      <div style="position: relative; height: 100%;">
-        <button class="close-sidebar" onclick="toggleMobileSidebar()" style="position: absolute; top: 15px; right: 15px; z-index: 10; background: #f0f0f0; border: none; border-radius: 4px; padding: 8px 12px; cursor: pointer;">
-          ✕ Close
-        </button>
-        <div class="sidebar-content" style="padding-top: 50px;">
-          <!-- Mobile sidebar content will be moved here by JavaScript -->
-        </div>
+      <button class="close-sidebar" id="closeSidebarBtn">✕ Close</button>
+      <div class="sidebar-content">
+        <!-- Mobile sidebar content will be moved here by JavaScript -->
       </div>
     </div>
 
@@ -5371,16 +5372,41 @@ Reply STOP to unsubscribe.`;
       const toggleBtn = document.getElementById('mobileSidebarToggle');
       
       if (sidebar.classList.contains('open')) {
-        sidebar.classList.remove('open');
-        if (toggleBtn) toggleBtn.textContent = '📋 Open Sidebar';
+        closeMobileSidebar();
       } else {
-        sidebar.classList.add('open');
-        if (toggleBtn) toggleBtn.textContent = '✕ Close Sidebar';
+        openMobileSidebar();
       }
-      
-      // Prevent body scroll when sidebar is open
-      document.body.style.overflow = sidebar.classList.contains('open') ? 'hidden' : '';
     }
+    
+    function openMobileSidebar() {
+      const sidebar = document.getElementById('mobileSidebar');
+      const toggleBtn = document.getElementById('mobileSidebarToggle');
+      
+      sidebar.classList.add('open');
+      if (toggleBtn) toggleBtn.textContent = '✕ Close';
+      document.body.style.overflow = 'hidden';
+    }
+    
+    function closeMobileSidebar() {
+      const sidebar = document.getElementById('mobileSidebar');
+      const toggleBtn = document.getElementById('mobileSidebarToggle');
+      
+      sidebar.classList.remove('open');
+      if (toggleBtn) toggleBtn.textContent = '📋 Open Sidebar';
+      document.body.style.overflow = '';
+    }
+    
+    // Close sidebar when clicking outside content
+    document.addEventListener('click', function(event) {
+      const sidebar = document.getElementById('mobileSidebar');
+      const toggleBtn = document.getElementById('mobileSidebarToggle');
+      
+      if (sidebar && !sidebar.contains(event.target) && 
+          toggleBtn && !toggleBtn.contains(event.target) &&
+          sidebar.classList.contains('open')) {
+        closeMobileSidebar();
+      }
+    });
     
     // Function to toggle desktop sidebar
     function toggleSidebar() {
@@ -5680,6 +5706,14 @@ Reply STOP to unsubscribe.`;
       document.body.insertAdjacentHTML('beforeend', modalHTML);
     }
 
+    // Close button event listener
+    document.addEventListener('DOMContentLoaded', function() {
+      const closeBtn = document.getElementById('closeSidebarBtn');
+      if (closeBtn) {
+        closeBtn.addEventListener('click', closeMobileSidebar);
+      }
+    });
+    
     // Set up auto-update every 5 minutes
     setInterval(updateFloodData, 5 * 60 * 1000);
 
