@@ -302,7 +302,6 @@
         max-height: none;
         overflow-y: visible;
         padding: 15px;
-        border-top: 1px solid #e2e8f0;
       }
       
       .sidebar.collapsed {
@@ -328,11 +327,15 @@
       }
       
       /* Make buttons smaller on mobile */
-      .sidebar .btn, 
-      .sidebar .emergency-btn {
-        padding: 8px 12px;
-        font-size: 13px;
-        margin: 5px 0;
+      .floating-controls .btn, 
+      .floating-controls .emergency-btn {
+        padding: 5px 8px;
+        font-size: 11px;
+        border-radius: 4px;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+        white-space: nowrap;
+        line-height: 1.2;
+        margin: 0;
       }
       
       /* Reduce font sizes for mobile */
@@ -466,11 +469,11 @@
 
     .floating-controls {
 
-      position: absolute;
+      position: fixed;
 
-      top: 20px;
+      top: 10px;
 
-      left: 20px;
+      left: 5px;
 
       z-index: 1000;
 
@@ -478,7 +481,7 @@
 
       flex-direction: column;
 
-      gap: 10px;
+      gap: 6px;
 
     }
 
@@ -602,22 +605,37 @@
 
       position: absolute;
 
-      bottom: 20px;
+      bottom: 10px;
 
-      left: 20px;
+      left: 5px;
 
       background: rgba(255, 255, 255, 0.95);
 
       backdrop-filter: blur(10px);
 
-      border-radius: 12px;
+      border-radius: 4px;
 
-      padding: 15px;
+      padding: 6px 8px;
 
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 1px 6px rgba(0, 0, 0, 0.15);
 
       z-index: 1000;
 
+    }
+
+    .legend i {
+      width: 12px;
+      height: 12px;
+      float: left;
+      margin-right: 4px;
+      margin-top: 2px;
+      opacity: 0.8;
+      width: 100%;
+    }
+
+    .legend .legend-item {
+      margin-bottom: 2px;
+      line-height: 14px;
     }
 
      
@@ -1026,9 +1044,7 @@
  
 
 .sidebar-toggle:not(.collapsed) {
-
-  right: 290px;
-
+  right: 260px;
 }
 
  
@@ -1062,56 +1078,52 @@
   }
   
   .sidebar {
-    width: 280px;
-    max-width: 90%;
+    width: 240px;
+    max-width: 80%;
     position: fixed;
     top: 10px;
-    right: 10px;
+    right: 8px;
     bottom: 10px;
     z-index: 1000;
     border-radius: 8px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 3px 15px rgba(0, 0, 0, 0.12);
     overflow-y: auto;
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
+    background: rgba(255, 255, 255, 0.98);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
     transform: translateX(0);
-    transition: transform 0.3s ease, width 0.3s ease;
+    transition: all 0.3s ease;
   }
 
    
 
   .sidebar.collapsed {
-    transform: translateX(calc(100% - 40px));
-    width: 40px;
+    transform: translateX(calc(100% - 35px));
+    width: 35px;
     overflow: hidden;
   }
 
    
 
   .floating-controls {
-
+    position: fixed;
     top: 10px;
-
     left: 10px;
-        top: 10px;
-
-        left: 10px;
-
-        right: 10px;
-
-      }
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
 
        
 
       .floating-btn {
-
         min-width: auto;
-
-        padding: 10px 16px;
-
-        font-size: 14px;
-
+        padding: 6px 10px;
+        font-size: 12px;
+        border-radius: 6px;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+        white-space: nowrap;
       }
 
        
